@@ -5,14 +5,38 @@
       "name": "语言学概论",
       "icon": "📚",
       "children": [
-        { "id": "ling-intro", "name": "语言的本质" },
-        { "id": "ling-phonetics", "name": "语音" },
-        { "id": "ling-lexicon", "name": "词汇" },
-        { "id": "ling-grammar", "name": "语法" },
-        { "id": "ling-semantics", "name": "语义" },
-        { "id": "ling-pragmatics", "name": "语用" },
-        { "id": "ling-writing", "name": "文字" },
-        { "id": "ling-evolution", "name": "语言演变" }
+        {
+          "id": "ling-intro",
+          "name": "语言的本质"
+        },
+        {
+          "id": "ling-phonetics",
+          "name": "语音"
+        },
+        {
+          "id": "ling-lexicon",
+          "name": "词汇"
+        },
+        {
+          "id": "ling-grammar",
+          "name": "语法"
+        },
+        {
+          "id": "ling-semantics",
+          "name": "语义"
+        },
+        {
+          "id": "ling-pragmatics",
+          "name": "语用"
+        },
+        {
+          "id": "ling-writing",
+          "name": "文字"
+        },
+        {
+          "id": "ling-evolution",
+          "name": "语言演变"
+        }
       ]
     },
     {
@@ -20,11 +44,26 @@
       "name": "现代汉语",
       "icon": "📖",
       "children": [
-        { "id": "mc-phonetics", "name": "语音" },
-        { "id": "mc-writing", "name": "文字" },
-        { "id": "mc-lexicon", "name": "词汇" },
-        { "id": "mc-grammar", "name": "语法" },
-        { "id": "mc-rhetoric", "name": "修辞" }
+        {
+          "id": "mc-phonetics",
+          "name": "语音"
+        },
+        {
+          "id": "mc-writing",
+          "name": "文字"
+        },
+        {
+          "id": "mc-lexicon",
+          "name": "词汇"
+        },
+        {
+          "id": "mc-grammar",
+          "name": "语法"
+        },
+        {
+          "id": "mc-rhetoric",
+          "name": "修辞"
+        }
       ]
     },
     {
@@ -32,12 +71,30 @@
       "name": "古代汉语",
       "icon": "🏛️",
       "children": [
-        { "id": "ac-writing", "name": "文字" },
-        { "id": "ac-lexicon", "name": "词汇" },
-        { "id": "ac-grammar", "name": "语法" },
-        { "id": "ac-phonology", "name": "音韵" },
-        { "id": "ac-exegesis", "name": "训诂" },
-        { "id": "ac-reading", "name": "古书阅读" }
+        {
+          "id": "ac-writing",
+          "name": "文字"
+        },
+        {
+          "id": "ac-lexicon",
+          "name": "词汇"
+        },
+        {
+          "id": "ac-grammar",
+          "name": "语法"
+        },
+        {
+          "id": "ac-phonology",
+          "name": "音韵"
+        },
+        {
+          "id": "ac-exegesis",
+          "name": "训诂"
+        },
+        {
+          "id": "ac-reading",
+          "name": "古书阅读"
+        }
       ]
     },
     {
@@ -45,19 +102,22 @@
       "name": "语义学与语用学",
       "icon": "💬",
       "children": [
-        { "id": "sp-relations", "name": "语义关系" },
-        { "id": "sp-speech-acts", "name": "言语行为" },
-        { "id": "sp-implicature", "name": "会话含义" },
-        { "id": "sp-presupposition", "name": "预设" }
-      ]
-    },
-    {
-      "id": "past-papers",
-      "name": "历年真题",
-      "icon": "📜",
-      "children": [
-        { "id": "pp-own-school", "name": "本院校真题" },
-        { "id": "pp-other-schools", "name": "他院校真题" }
+        {
+          "id": "sp-relations",
+          "name": "语义关系"
+        },
+        {
+          "id": "sp-speech-acts",
+          "name": "言语行为"
+        },
+        {
+          "id": "sp-implicature",
+          "name": "会话含义"
+        },
+        {
+          "id": "sp-presupposition",
+          "name": "预设"
+        }
       ]
     },
     {
@@ -65,8 +125,57 @@
       "name": "模拟卷与练习",
       "icon": "✏️",
       "children": [
-        { "id": "mp-mock", "name": "模拟题" },
-        { "id": "mp-practice", "name": "练习题" }
+        {
+          "id": "mp-mock",
+          "name": "模拟题"
+        },
+        {
+          "id": "mp-practice",
+          "name": "练习题"
+        }
+      ]
+    },
+    {
+      "id": "njsu-papers",
+      "name": "南师大真题",
+      "icon": "📜",
+      "children": [
+        {
+          "id": "njsu-402",
+          "name": "402 语言学与古代汉语"
+        },
+        {
+          "id": "njsu-602",
+          "name": "602 现代汉语"
+        },
+        {
+          "id": "njsu-611",
+          "name": "611 现代汉语"
+        },
+        {
+          "id": "njsu-613",
+          "name": "613 现代汉语"
+        },
+        {
+          "id": "njsu-802",
+          "name": "802 语言学与古代汉语"
+        },
+        {
+          "id": "njsu-803",
+          "name": "803 语言学概论"
+        },
+        {
+          "id": "njsu-804",
+          "name": "804 汉语史（古代汉语）"
+        },
+        {
+          "id": "njsu-610",
+          "name": "610 专业写作"
+        },
+        {
+          "id": "njsu-802-extra",
+          "name": "802 汉语综合（补充）"
+        }
       ]
     }
   ]
