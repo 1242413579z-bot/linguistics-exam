@@ -1,0 +1,118 @@
+{
+  "chapterId": "njsu-2009-602",
+  "chapterName": "602 现代汉语",
+  "questions": [
+    {
+      "id": 1,
+      "source": "2009年南师大602真题",
+      "stem": "一、术语解释（15分）\n1. 语言",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 2,
+      "source": "2009年南师大602真题",
+      "stem": "一、术语解释（15分）\n2. 音位条件变体",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 3,
+      "source": "2009年南师大602真题",
+      "stem": "一、术语解释（15分）\n3. 同音字",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 4,
+      "source": "2009年南师大602真题",
+      "stem": "一、术语解释（15分）\n4. 主谓谓语句",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 5,
+      "source": "2009年南师大602真题",
+      "stem": "一、术语解释（15分）\n5. 语法功能",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 6,
+      "source": "2009年南师大602真题",
+      "stem": "七、分析下列单句\n1. 用层次分析法（15 分）\n  (1) 这种事情我没有兴趣\n  (2) 你妈妈待你多好哇\n  (3) 我送给小王一本我最喜爱的书\n  (4) 敌人被我们打得狼狈逃窜\n  (5) 我认为他能做好自己的工作",
+      "options": null,
+      "answer": "",
+      "analysis": "用层次分析法\n(1)\n<table><tr><td colspan=\"6\">这种事情我没有兴趣</td></tr><tr><td colspan=\"3\">主</td><td colspan=\"3\">谓</td></tr><tr><td colspan=\"2\">偏</td><td>正</td><td>主</td><td colspan=\"2\">谓</td></tr><tr><td>指</td><td>量</td><td></td><td></td><td>述</td><td>宾</td></tr></table>\n(3)\n(2)\n你妈妈待你多好哇\n<table><tr><td colspan=\"2\">主</td><td colspan=\"3\">谓</td></tr><tr><td>偏</td><td>正</td><td>述</td><td colspan=\"2\">补</td></tr><tr><td></td><td></td><td>述</td><td>宾</td><td>偏 正</td></tr></table>\n(4)\n我送给小王一本我最喜爱的书\n<table><tr><td colspan=\"7\">主谓</td></tr><tr><td colspan=\"2\">述</td><td colspan=\"5\">宾</td></tr><tr><td>述</td><td>宾</td><td>偏</td><td colspan=\"4\">正</td></tr><tr><td rowspan=\"3\" colspan=\"2\"></td><td rowspan=\"3\">数量</td><td rowspan=\"3\">偏</td><td colspan=\"3\">正</td></tr><tr><td colspan=\"2\">偏</td><td>正</td></tr><tr><td>偏</td><td>正</td><td></td></tr></table>\n<table><tr><td colspan=\"6\">敌人被我们打得狼狈逃窜</td></tr><tr><td>主</td><td colspan=\"5\">谓</td></tr><tr><td rowspan=\"2\"></td><td colspan=\"2\">偏</td><td colspan=\"3\">正</td></tr><tr><td>介</td><td>宾</td><td>述</td><td colspan=\"2\">补</td></tr><tr><td></td><td></td><td></td><td></td><td>偏</td><td>正</td></tr></table>\n(5)\n我认为他能做好自己的工作\n<table><tr><td>主</td><td colspan=\"5\">谓</td></tr><tr><td>述</td><td colspan=\"5\">宾</td></tr><tr><td rowspan=\"4\"></td><td rowspan=\"4\">主</td><td colspan=\"4\">谓</td></tr><tr><td rowspan=\"2\">偏</td><td colspan=\"3\">正</td></tr><tr><td>述</td><td colspan=\"2\">宾</td></tr><tr><td>述</td><td>补</td><td>偏</td><td>正</td></tr></table>"
+    },
+    {
+      "id": 7,
+      "source": "2009年南师大602真题",
+      "stem": "七、分析下列单句\n2. 用中心词分析法（15 分）\n  (1) 财政部长助理朱光耀在接受本报记者采访时介绍说，中美两国元首高度关注中美战略经济对话进程，给予了及时的、重要的指示。\n  (2) 校长派教务处长去北京购买教学仪器。\n  (3) 当地群众热烈欢迎赵先生的到来。\n  (4) 两年来的实践证明，中美战略经济对话机制为促进两国经贸关系的健康稳定发展以及中美整体关系向前发展搭建了一个良好的平台。\n  (5) 黑潮给亚洲东部国家菲律宾、中国、朝鲜，尤其是日本带来了巨大的影响。",
+      "options": null,
+      "answer": "",
+      "analysis": "用中心词分析法\n(1) 财政部长助理朱光耀 || [在接受采访时]介绍说, 中美两国元首高度关注中美战略经济对话进程, 给予了及时的、重要的指示。\n(2) 校长 || 派教务处长去北京购买（教学）仪器。\n(3) (当地) 群众 || [热烈] 欢迎赵先生的到来。\n(4) (两年来)的实践||证明, 中美战略经济对话机制为促进两国经贸关系的健康稳定发展以及中美整体关系向前发展搭建了一个良好的平台。\n(5) 黑潮 || [给亚洲东部国家菲律宾、中国、朝鲜，尤其是日本] 带<来>了（巨大）的影响。"
+    },
+    {
+      "id": 8,
+      "source": "2009年南师大602真题",
+      "stem": "八、分析下列复句。（10分）\n1. 虽然实施还会碰到这样那样的困难、问题乃至阻力，虽然这一工作离完善离成为人们生活方式的一部分还有一定的距离，虽然在“官员体制”的改革还未充分展开到位之前充分实行它还会有许多周折，但是，政府信息打破神秘感，走向透明化，已是质的飞跃，是重大变革。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 9,
+      "source": "2009年南师大602真题",
+      "stem": "八、分析下列复句。（10分）\n2. 每个人、每群人的经历都是有限的，如果把眼光局限在自己、局限在身边，那么认识难免有片面、结论难免有偏差。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 10,
+      "source": "2009年南师大602真题",
+      "stem": "九、按照要求造句。（10分）\n1. 选择疑问句",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 11,
+      "source": "2009年南师大602真题",
+      "stem": "九、按照要求造句。（10分）\n2. 递进复句",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 12,
+      "source": "2009年南师大602真题",
+      "stem": "九、按照要求造句。（10分）\n3. 动词为“取得”义的双宾语",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 13,
+      "source": "2009年南师大602真题",
+      "stem": "九、按照要求造句。（10分）\n4. 大主语是受事的主谓谓语句",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 14,
+      "source": "2009年南师大602真题",
+      "stem": "九、按照要求造句。（10分）\n5. 连谓句\n十、张岱的《湖心亭看雪》中有这样的句子：“湖上影子，惟长堤一痕，湖心亭一点，与余舟一芥，舟中人两三粒而已。”句中的量词和名词的搭配和平常不同。谈谈你对这种语言现象的看法。（20分）",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}

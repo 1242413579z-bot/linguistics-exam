@@ -66,7 +66,21 @@ const App = {
           <div class="category-children">
       `;
       (cat.children || []).forEach(child => {
-        html += `<a class="category-child" href="practice.html?chapter=${child.id}" data-chapter="${child.id}">${child.name}</a>`;
+        if (child.children) {
+          // 三级分类: 年份 -> 试卷
+          html += `<div class="category-subgroup collapsed">
+            <div class="category-subheader" data-toggle="${child.id}">
+              <span>${child.name}</span>
+              <span class="arrow">▼</span>
+            </div>
+            <div class="category-subchildren">`;
+          child.children.forEach(sub => {
+            html += `<a class="category-child" href="practice.html?chapter=${sub.id}" data-chapter="${sub.id}">${sub.name}</a>`;
+          });
+          html += `</div></div>`;
+        } else {
+          html += `<a class="category-child" href="practice.html?chapter=${child.id}" data-chapter="${child.id}">${child.name}</a>`;
+        }
       });
       html += `</div></div>`;
     });
@@ -76,6 +90,12 @@ const App = {
 
     // 绑定分类折叠
     sidebar.querySelectorAll('.category-header').forEach(header => {
+      header.addEventListener('click', () => {
+        header.parentElement.classList.toggle('collapsed');
+      });
+    });
+    // 绑定子分类折叠
+    sidebar.querySelectorAll('.category-subheader').forEach(header => {
       header.addEventListener('click', () => {
         header.parentElement.classList.toggle('collapsed');
       });

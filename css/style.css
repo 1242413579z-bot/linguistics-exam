@@ -415,3 +415,39 @@ ul, ol { list-style: none; }
   }
   .overlay.show { display: block; }
 }
+
+
+/* ===== 三级分类侧边栏 ===== */
+.category-subgroup {
+  margin-left: 12px;
+}
+.category-subgroup.collapsed .category-subchildren {
+  display: none;
+}
+.category-subheader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary, #666);
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.category-subheader:hover {
+  background: var(--bg-hover, rgba(0,0,0,0.04));
+}
+.category-subheader .arrow {
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+.category-subgroup:not(.collapsed) .category-subheader .arrow {
+  transform: rotate(0deg);
+}
+.category-subgroup.collapsed .category-subheader .arrow {
+  transform: rotate(-90deg);
+}
+.category-subchildren {
+  padding-left: 8px;
+}
