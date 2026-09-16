@@ -1,0 +1,22 @@
+{
+  "chapterId": "sp-implicature",
+  "chapterName": "会话含义",
+  "questions": [
+    {
+      "id": 1,
+      "source": "练习题",
+      "stem": "什么是会话含义？它是如何产生的？",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 2,
+      "source": "模拟题",
+      "stem": "举例说明违反合作原则准则产生的会话含义。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}

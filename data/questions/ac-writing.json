@@ -1,0 +1,22 @@
+{
+  "chapterId": "ac-writing",
+  "chapterName": "文字",
+  "questions": [
+    {
+      "id": 1,
+      "source": "练习题",
+      "stem": "什么是古今字？举例说明。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 2,
+      "source": "练习题",
+      "stem": "简述通假字和假借字的区别。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}

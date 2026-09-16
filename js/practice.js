@@ -1,0 +1,288 @@
+/* practice.js - 练习页逻辑 */
+const PracticePage = {
+  chapterId: null,
+  chapter: null,
+  questions: [],
+  allChapters: [],
+  scope: 'all', // all / core / past
+
+  async init() {
+    this.chapterId = App.getQueryParam('chapter');
+    if (!this.chapterId) {
+      document.getElementById('main-content').innerHTML = 
+        '<div class="empty-state"><div class="empty-icon">📋</div><h3>未选择章节</h3><p>请从侧边栏选择一个章节开始练习</p><a class="btn btn-primary" href="index.html">返回首页</a></div>';
+      return;
+    }
+
+    this.allChapters = await DataLoader.getAllChapters();
+    this.chapter = await DataLoader.getChapter(this.chapterId);
+    const data = await DataLoader.loadQuestions(this.chapterId);
+    this.questions = data.questions || [];
+
+    this.render();
+  },
+
+  render() {
+    const main = document.getElementById('main-content');
+    const progress = Storage.getChapterProgress(this.chapterId);
+    const doneCount = progress.length;
+    const total = this.questions.length;
+
+    // 上一节/下一节
+    const idx = this.allChapters.findIndex(c => c.id === this.chapterId);
+    const prev = idx > 0 ? this.allChapters[idx - 1] : null;
+    const next = idx < this.allChapters.length - 1 ? this.allChapters[idx + 1] : null;
+
+    main.innerHTML = `
+      <div class="practice-header">
+        <div>
+          <div class="practice-title">${App.escapeHtml(this.chapter?.parentName || '')} · ${App.escapeHtml(this.chapter?.name || this.chapterId)}</div>
+          <div class="practice-meta">已完成 ${doneCount} / ${total} 题</div>
+        </div>
+        <div class="practice-nav">
+          ${prev ? `<a class="btn btn-secondary" href="practice.html?chapter=${prev.id}">← 上一节</a>` : '<button class="btn btn-secondary" disabled>← 上一节</button>'}
+          ${next ? `<a class="btn btn-secondary" href="practice.html?chapter=${next.id}">下一节 →</a>` : '<button class="btn btn-secondary" disabled>下一节 →</button>'}
+        </div>
+      </div>
+
+      <div class="scope-tabs">
+        <div class="scope-tab active" data-scope="all">完整</div>
+        <div class="scope-tab" data-scope="core">核心</div>
+        <div class="scope-tab" data-scope="past">真题</div>
+      </div>
+
+      <div id="questions-container"></div>
+    `;
+
+    // 范围切换
+    main.querySelectorAll('.scope-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        main.querySelectorAll('.scope-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        this.scope = tab.dataset.scope;
+        this.renderQuestions();
+      });
+    });
+
+    this.renderQuestions();
+  },
+
+  getFilteredQuestions() {
+    if (this.scope === 'all') return this.questions;
+    if (this.scope === 'past') return this.questions.filter(q => q.source && q.source.includes('真题'));
+    // core: 非真题
+    return this.questions.filter(q => !q.source || !q.source.includes('真题'));
+  },
+
+  renderQuestions() {
+    const container = document.getElementById('questions-container');
+    const list = this.getFilteredQuestions();
+
+    if (list.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><h3>暂无题目</h3><p>该范围下没有题目</p></div>';
+      return;
+    }
+
+    container.innerHTML = list.map((q, idx) => this.renderQuestionCard(q, idx)).join('');
+    this.bindQuestionEvents();
+  },
+
+  renderQuestionCard(q, idx) {
+    const isFav = Storage.isFavorite(q.id, this.chapterId);
+    const mastery = Storage.getMasteryStatus(this.chapterId, q.id);
+    const userAns = Storage.getUserAnswer(this.chapterId, q.id);
+    const hasNote = !!Storage.getNote(this.chapterId, q.id);
+    const note = hasNote ? Storage.getNote(this.chapterId, q.id) : null;
+
+    let optionsHtml = '';
+    if (q.options && q.options.length) {
+      optionsHtml = '<div class="q-options">' + 
+        q.options.map((opt, i) => `<div class="q-option">${String.fromCharCode(65+i)}. ${App.escapeHtml(opt)}</div>`).join('') +
+        '</div>';
+    }
+
+    const answerContent = userAns.answer || q.answer || '';
+    const analysisContent = userAns.analysis || q.analysis || '';
+
+    return `
+      <div class="q-card" data-qid="${q.id}">
+        <div class="q-header">
+          <div class="row" style="gap:10px;">
+            <span class="q-number">第 ${idx + 1} 题</span>
+            <span class="q-source">${App.escapeHtml(q.source || '')}</span>
+          </div>
+          <div class="q-actions">
+            <button class="q-action-btn ${isFav ? 'favorited' : ''}" data-action="favorite" title="收藏">${isFav ? '★' : '☆'}</button>
+            <button class="q-action-btn ${hasNote ? 'active' : ''}" data-action="note" title="笔记">📋</button>
+            <button class="q-action-btn" data-action="retest" title="加入错题复测">🔄</button>
+          </div>
+        </div>
+        <div class="q-stem">${App.escapeHtml(q.stem)}</div>
+        ${optionsHtml}
+
+        <div class="mastery-selector">
+          <button class="mastery-btn ${mastery === 'mastered' ? 'active-mastered' : ''}" data-mastery="mastered">✓ 完全掌握</button>
+          <button class="mastery-btn ${mastery === 'unfamiliar' ? 'active-unfamiliar' : ''}" data-mastery="unfamiliar">△ 不熟练</button>
+          <button class="mastery-btn ${mastery === 'unknown' ? 'active-unknown' : ''}" data-mastery="unknown">✗ 完全不会</button>
+        </div>
+
+        <div class="answer-section">
+          <div class="answer-toggle">
+            <button class="toggle-btn-sm" data-toggle="answer">查看答案</button>
+            <button class="toggle-btn-sm" data-toggle="analysis">查看解析</button>
+            <button class="toggle-btn-sm" data-toggle="edit">编辑答案/解析</button>
+          </div>
+          <div class="answer-content" id="answer-${q.id}">
+            <div class="answer-label">答案</div>
+            <div class="answer-text">${answerContent ? App.escapeHtml(answerContent) : '<span class="text-secondary">暂无答案，点击"编辑答案/解析"添加</span>'}</div>
+          </div>
+          <div class="answer-content" id="analysis-${q.id}">
+            <div class="answer-label">解析</div>
+            <div class="answer-text">${analysisContent ? App.escapeHtml(analysisContent) : '<span class="text-secondary">暂无解析</span>'}</div>
+          </div>
+          <div class="answer-content answer-edit" id="edit-${q.id}">
+            <div class="answer-label">编辑答案</div>
+            <textarea class="textarea" id="edit-answer-${q.id}" placeholder="输入答案...">${App.escapeHtml(userAns.answer || q.answer || '')}</textarea>
+            <div class="answer-label">编辑解析</div>
+            <textarea class="textarea" id="edit-analysis-${q.id}" placeholder="输入解析..." rows="4">${App.escapeHtml(userAns.analysis || q.analysis || '')}</textarea>
+            <button class="btn btn-primary btn-sm" data-save-edit="${q.id}">保存</button>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  bindQuestionEvents() {
+    const container = document.getElementById('questions-container');
+
+    // 收藏
+    container.querySelectorAll('[data-action="favorite"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.q-card');
+        const qid = parseInt(card.dataset.qid);
+        if (Storage.isFavorite(qid, this.chapterId)) {
+          Storage.removeFavorite(qid, this.chapterId);
+          btn.classList.remove('favorited');
+          btn.textContent = '☆';
+        } else {
+          Storage.addFavorite(qid, this.chapterId);
+          btn.classList.add('favorited');
+          btn.textContent = '★';
+        }
+      });
+    });
+
+    // 笔记
+    container.querySelectorAll('[data-action="note"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.q-card');
+        const qid = parseInt(card.dataset.qid);
+        this.openNoteModal(qid);
+      });
+    });
+
+    // 加入错题复测
+    container.querySelectorAll('[data-action="retest"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.q-card');
+        const qid = parseInt(card.dataset.qid);
+        Storage.addToRetest(qid, this.chapterId);
+        btn.textContent = '✓';
+        btn.style.color = 'var(--success)';
+        setTimeout(() => { btn.textContent = '🔄'; btn.style.color = ''; }, 1500);
+      });
+    });
+
+    // 掌握状态
+    container.querySelectorAll('.mastery-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.q-card');
+        const qid = parseInt(card.dataset.qid);
+        const status = btn.dataset.mastery;
+        Storage.setMasteryStatus(this.chapterId, qid, status);
+        Storage.markDone(this.chapterId, qid);
+        // 刷新卡片样式
+        card.querySelectorAll('.mastery-btn').forEach(b => {
+          b.classList.remove('active-mastered', 'active-unfamiliar', 'active-unknown');
+        });
+        const cls = status === 'mastered' ? 'active-mastered' : status === 'unfamiliar' ? 'active-unfamiliar' : 'active-unknown';
+        btn.classList.add(cls);
+        // 更新进度计数
+        this.updateProgressCount();
+      });
+    });
+
+    // 答案/解析展开收起
+    container.querySelectorAll('[data-toggle]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.q-card');
+        const qid = parseInt(card.dataset.qid);
+        const type = btn.dataset.toggle;
+        const target = document.getElementById(`${type}-${qid}`);
+        const isActive = btn.classList.contains('active');
+        btn.classList.toggle('active');
+        target.classList.toggle('show');
+        btn.textContent = isActive ? (type === 'answer' ? '查看答案' : type === 'analysis' ? '查看解析' : '编辑答案/解析') : '收起';
+      });
+    });
+
+    // 保存编辑
+    container.querySelectorAll('[data-save-edit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.q-card');
+        const qid = parseInt(card.dataset.qid);
+        const answer = document.getElementById(`edit-answer-${qid}`).value;
+        const analysis = document.getElementById(`edit-analysis-${qid}`).value;
+        Storage.setUserAnswer(this.chapterId, qid, answer, analysis);
+        // 更新显示
+        const answerDiv = document.getElementById(`answer-${qid}`).querySelector('.answer-text');
+        const analysisDiv = document.getElementById(`analysis-${qid}`).querySelector('.answer-text');
+        answerDiv.innerHTML = answer ? App.escapeHtml(answer) : '<span class="text-secondary">暂无答案</span>';
+        analysisDiv.innerHTML = analysis ? App.escapeHtml(analysis) : '<span class="text-secondary">暂无解析</span>';
+        btn.textContent = '已保存 ✓';
+        setTimeout(() => { btn.textContent = '保存'; }, 1500);
+      });
+    });
+  },
+
+  openNoteModal(qid) {
+    const note = Storage.getNote(this.chapterId, qid);
+    const modal = document.createElement('div');
+    modal.className = 'note-modal show';
+    modal.innerHTML = `
+      <div class="note-modal-content">
+        <h3>题目笔记</h3>
+        <textarea class="textarea" id="note-content" placeholder="记录你的思路、推导或关键点..." rows="6">${note ? App.escapeHtml(note.content) : ''}</textarea>
+        <input type="text" class="input note-tags-input" id="note-tags" placeholder="标签（用逗号分隔）" value="${note ? (note.tags || []).join(',') : ''}">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+          <button class="btn btn-secondary" id="note-cancel">取消</button>
+          <button class="btn btn-primary" id="note-save">保存</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    const close = () => modal.remove();
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+    document.getElementById('note-cancel').addEventListener('click', close);
+    document.getElementById('note-save').addEventListener('click', () => {
+      const content = document.getElementById('note-content').value;
+      const tags = document.getElementById('note-tags').value.split(/[,，]/).map(t => t.trim()).filter(Boolean);
+      if (content.trim()) {
+        Storage.setNote(this.chapterId, qid, content, tags);
+      } else {
+        Storage.deleteNote(this.chapterId, qid);
+      }
+      close();
+      this.renderQuestions(); // 刷新笔记图标状态
+    });
+  },
+
+  updateProgressCount() {
+    const progress = Storage.getChapterProgress(this.chapterId);
+    const meta = document.querySelector('.practice-meta');
+    if (meta) meta.textContent = `已完成 ${progress.length} / ${this.questions.length} 题`;
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => PracticePage.init());

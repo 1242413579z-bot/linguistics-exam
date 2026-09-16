@@ -1,0 +1,14 @@
+{
+  "chapterId": "mp-mock",
+  "chapterName": "模拟题",
+  "questions": [
+    {
+      "id": 1,
+      "source": "模拟题",
+      "stem": "（示例）模拟题题目占位。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}

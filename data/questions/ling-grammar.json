@@ -1,0 +1,22 @@
+{
+  "chapterId": "ling-grammar",
+  "chapterName": "语法",
+  "questions": [
+    {
+      "id": 1,
+      "source": "练习题",
+      "stem": "什么是语法手段？常见的语法手段有哪些？",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 2,
+      "source": "模拟题",
+      "stem": "举例说明语法范畴的类型。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "chapterId": "ling-writing",
+  "chapterName": "文字",
+  "questions": [
+    {
+      "id": 1,
+      "source": "练习题",
+      "stem": "文字的类型有哪些？",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 2,
+      "source": "练习题",
+      "stem": "简述文字和语言的关系。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "chapterId": "ling-intro",
+  "chapterName": "语言的本质",
+  "questions": [
+    {
+      "id": 1,
+      "source": "练习题",
+      "stem": "简述语言的社会功能。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 2,
+      "source": "练习题",
+      "stem": "语言和言语有什么区别？",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}

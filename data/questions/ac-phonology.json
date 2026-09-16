@@ -1,0 +1,22 @@
+{
+  "chapterId": "ac-phonology",
+  "chapterName": "音韵",
+  "questions": [
+    {
+      "id": 1,
+      "source": "练习题",
+      "stem": "什么是反切？反切的原理是什么？",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 2,
+      "source": "练习题",
+      "stem": "简述上古音和中古音的区别。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}

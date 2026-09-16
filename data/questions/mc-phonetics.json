@@ -1,0 +1,22 @@
+{
+  "chapterId": "mc-phonetics",
+  "chapterName": "语音",
+  "questions": [
+    {
+      "id": 1,
+      "source": "练习题",
+      "stem": "普通话的声母有哪些？按发音部位和发音方法分类。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 2,
+      "source": "模拟题",
+      "stem": "什么是轻声？轻声有哪些作用？",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}

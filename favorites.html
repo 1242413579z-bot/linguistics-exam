@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>收藏本 - 语言学大观园</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-icon">语</div>
+        <span class="logo">语言学大观园</span>
+      </div>
+      <div class="sidebar-body" id="sidebar-body"></div>
+    </aside>
+    <div class="overlay" id="overlay"></div>
+
+    <div class="main-wrapper">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="toggle-btn" id="sidebar-toggle">☰</button>
+          <div class="nav-tabs">
+            <a class="nav-tab" href="index.html">学习区</a>
+            <a class="nav-tab" href="tools.html">工具区</a>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="icon-btn" id="theme-toggle">🌙</button>
+        </div>
+      </header>
+
+      <main class="content" id="main-content"></main>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/data-loader.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/favorites.js"></script>
+</body>
+</html>

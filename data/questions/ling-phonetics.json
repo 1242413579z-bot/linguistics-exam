@@ -1,0 +1,22 @@
+{
+  "chapterId": "ling-phonetics",
+  "chapterName": "语音",
+  "questions": [
+    {
+      "id": 1,
+      "source": "练习题",
+      "stem": "什么是音位？音位和音素有什么区别？",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 2,
+      "source": "模拟题",
+      "stem": "举例说明音位的区别特征。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}

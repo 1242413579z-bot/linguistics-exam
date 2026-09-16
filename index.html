@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>语言学大观园 - 首页</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-icon">语</div>
+        <span class="logo">语言学大观园</span>
+      </div>
+      <div class="sidebar-body" id="sidebar-body"></div>
+    </aside>
+    <div class="overlay" id="overlay"></div>
+
+    <!-- 主内容 -->
+    <div class="main-wrapper">
+      <!-- 顶部导航 -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button class="toggle-btn" id="sidebar-toggle" title="收起侧边栏">☰</button>
+          <div class="nav-tabs">
+            <a class="nav-tab" href="index.html">学习区</a>
+            <a class="nav-tab" href="tools.html">工具区</a>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="icon-btn" id="theme-toggle" title="切换主题">🌙</button>
+        </div>
+      </header>
+
+      <!-- 内容区 -->
+      <main class="content" id="main-content">
+        <!-- 动态渲染 -->
+      </main>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/data-loader.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // 首页逻辑
+    document.addEventListener('DOMContentLoaded', async () => {
+      const main = document.getElementById('main-content');
+      const chapters = await DataLoader.getAllChapters();
+      
+      // 默认显示第一个章节
+      const defaultChapter = chapters[0];
+      if (defaultChapter) {
+        const data = await DataLoader.loadQuestions(defaultChapter.id);
+        const progress = Storage.getChapterProgress(defaultChapter.id);
+        const mastered = progress.length;
+        const total = data.questions.length;
+
+        main.innerHTML = `
+          <div class="card" style="margin-bottom:20px;">
+            <div class="row-between">
+              <div>
+                <h1 style="font-size:24px;margin-bottom:8px;">${App.escapeHtml(defaultChapter.parentName)} · ${App.escapeHtml(defaultChapter.name)}</h1>
+                <p class="text-secondary">共 ${total} 题，已完成 ${mastered} 题</p>
+              </div>
+              <a class="btn btn-primary btn-lg" href="practice.html?chapter=${defaultChapter.id}">练习这一节 →</a>
+            </div>
+          </div>
+          <div class="card">
+            <h2 style="font-size:18px;margin-bottom:16px;">选择其他章节</h2>
+            <div id="chapter-grid"></div>
+          </div>
+        `;
+
+        // 渲染章节网格
+        const grid = document.getElementById('chapter-grid');
+        const cats = await DataLoader.loadCategories();
+        let html = '';
+        cats.categories.forEach(cat => {
+          html += `<div style="margin-bottom:20px;">
+            <h3 style="font-size:15px;color:var(--text-secondary);margin-bottom:10px;">${cat.icon || '📁'} ${App.escapeHtml(cat.name)}</h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">`;
+          (cat.children || []).forEach(child => {
+            html += `<a href="practice.html?chapter=${child.id}" style="display:block;padding:14px;background:var(--bg-tertiary);border-radius:var(--radius);color:var(--text-primary);transition:all 0.15s;" onmouseover="this.style.background='var(--accent-bg)';this.style.color='var(--accent)'" onmouseout="this.style.background='var(--bg-tertiary)';this.style.color='var(--text-primary)'">${App.escapeHtml(child.name)}</a>`;
+          });
+          html += `</div></div>`;
+        });
+        grid.innerHTML = html;
+      } else {
+        main.innerHTML = `<div class="empty-state"><div class="empty-icon">📚</div><h3>暂无章节</h3><p>请先配置题目分类</p></div>`;
+      }
+    });
+  </script>
+</body>
+</html>

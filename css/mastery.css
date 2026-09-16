@@ -1,0 +1,83 @@
+/* mastery.css - 掌握地图 */
+.mastery-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.mastery-tab {
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mastery-tab:hover { border-color: var(--accent); }
+.mastery-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.mastery-tab .count { font-size: 12px; opacity: 0.7; margin-left: 4px; }
+
+.mastery-status-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.status-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+}
+.status-dot {
+  width: 14px; height: 14px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.status-dot.unseen { background: var(--unknown); opacity: 0.3; }
+.status-dot.mastered { background: var(--success); }
+.status-dot.unfamiliar { background: var(--warning); }
+.status-dot.unknown { background: var(--danger); }
+.status-label { font-size: 13px; color: var(--text-secondary); }
+.status-count { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+
+.q-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+  gap: 4px;
+}
+.q-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  position: relative;
+}
+.q-cell:hover { transform: scale(1.3); z-index: 10; box-shadow: var(--shadow-md); }
+.q-cell.unseen { background: var(--unknown); opacity: 0.25; }
+.q-cell.mastered { background: var(--success); }
+.q-cell.unfamiliar { background: var(--warning); }
+.q-cell.unknown { background: var(--danger); }
+
+.q-cell .tooltip {
+  display: none;
+  position: absolute;
+  bottom: 130%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  color: var(--bg-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 20;
+  pointer-events: none;
+}
+.q-cell:hover .tooltip { display: block; }

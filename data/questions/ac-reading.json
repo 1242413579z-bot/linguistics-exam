@@ -1,0 +1,22 @@
+{
+  "chapterId": "ac-reading",
+  "chapterName": "古书阅读",
+  "questions": [
+    {
+      "id": 1,
+      "source": "练习题",
+      "stem": "古书注解的类型有哪些？",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 2,
+      "source": "模拟题",
+      "stem": "标点下面一段古文并翻译。（示例占位）",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}

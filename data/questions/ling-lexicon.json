@@ -1,0 +1,22 @@
+{
+  "chapterId": "ling-lexicon",
+  "chapterName": "词汇",
+  "questions": [
+    {
+      "id": 1,
+      "source": "练习题",
+      "stem": "简述词的聚合关系和组合关系。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 2,
+      "source": "练习题",
+      "stem": "什么是语义场？举例说明。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "chapterId": "mc-writing",
+  "chapterName": "文字",
+  "questions": [
+    {
+      "id": 1,
+      "source": "练习题",
+      "stem": "汉字的特点有哪些？",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    },
+    {
+      "id": 2,
+      "source": "练习题",
+      "stem": "简述六书。",
+      "options": null,
+      "answer": "",
+      "analysis": ""
+    }
+  ]
+}
