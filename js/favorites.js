@@ -55,8 +55,8 @@ const FavoritesPage = {
 
     // 筛选
     if (this.filterCategory !== 'all') {
-      const cat = await DataLoader.getCategory(this.filterCategory);
-      const chapterIds = (cat?.children || []).map(c => c.id);
+      await DataLoader.loadCategories();
+      const chapterIds = DataLoader.getCategoryChapterIds(this.filterCategory);
       favorites = favorites.filter(f => chapterIds.includes(f.chapterId));
     }
 

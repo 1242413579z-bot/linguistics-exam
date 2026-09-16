@@ -72,9 +72,8 @@ const MasteryPage = {
     let questions = this.allQuestions;
 
     if (this.currentCategory !== 'all') {
-      const cats = await DataLoader.loadCategories();
-      const cat = cats.categories.find(c => c.id === this.currentCategory);
-      const chapterIds = (cat?.children || []).map(c => c.id);
+      await DataLoader.loadCategories();
+      const chapterIds = DataLoader.getCategoryChapterIds(this.currentCategory);
       questions = questions.filter(q => chapterIds.includes(q.chapterId));
     }
 

@@ -68,9 +68,8 @@ const NotesPage = {
 
       // 分类筛选
       if (this.filterCategory !== 'all') {
-        const cats = await DataLoader.loadCategories();
-        const cat = cats.categories.find(c => c.id === this.filterCategory);
-        const chapterIds = (cat?.children || []).map(c => c.id);
+        await DataLoader.loadCategories();
+        const chapterIds = DataLoader.getCategoryChapterIds(this.filterCategory);
         if (!chapterIds.includes(chapterId)) continue;
       }
 

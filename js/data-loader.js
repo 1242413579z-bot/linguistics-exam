@@ -32,13 +32,20 @@ const DataLoader = {
     }
   },
 
-  /* 获取所有章节的平铺列表 */
+  /* 获取所有章节的平铺列表（支持三级分类） */
   async getAllChapters() {
     const cats = await this.loadCategories();
     const chapters = [];
     cats.categories.forEach(cat => {
       (cat.children || []).forEach(child => {
-        chapters.push({ ...child, parentId: cat.id, parentName: cat.name });
+        if (child.children) {
+          // 三级分类: 年份 -> 试卷
+          child.children.forEach(sub => {
+            chapters.push({ ...sub, parentId: cat.id, parentName: cat.name });
+          });
+        } else {
+          chapters.push({ ...child, parentId: cat.id, parentName: cat.name });
+        }
       });
     });
     return chapters;
@@ -48,6 +55,21 @@ const DataLoader = {
   async getCategory(categoryId) {
     const cats = await this.loadCategories();
     return cats.categories.find(c => c.id === categoryId);
+  },
+
+  /* 获取某分类下所有章节ID（支持三级分类） */
+  getCategoryChapterIds(categoryId) {
+    const cat = this._categories?.categories.find(c => c.id === categoryId);
+    if (!cat) return [];
+    const ids = [];
+    (cat.children || []).forEach(child => {
+      if (child.children) {
+        child.children.forEach(sub => ids.push(sub.id));
+      } else {
+        ids.push(child.id);
+      }
+    });
+    return ids;
   },
 
   /* 获取章节信息 */
