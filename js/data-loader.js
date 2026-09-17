@@ -2,11 +2,12 @@
 const DataLoader = {
   _categories: null,
   _questionCache: {},
+  _curatedIndex: null,
 
   async loadCategories() {
     if (this._categories) return this._categories;
     try {
-      const res = await fetch('data/categories.json?v=3');
+      const res = await fetch('data/categories.json?v=5');
       this._categories = await res.json();
       return this._categories;
     } catch (e) {
@@ -18,7 +19,7 @@ const DataLoader = {
   async loadQuestions(chapterId) {
     if (this._questionCache[chapterId]) return this._questionCache[chapterId];
     try {
-      const res = await fetch(`data/questions/${chapterId}.json?v=3`);
+      const res = await fetch(`data/questions/${chapterId}.json?v=5`);
       if (!res.ok) {
         // 找不到文件时返回空
         return { chapterId, chapterName: '', questions: [] };
@@ -109,57 +110,30 @@ const DataLoader = {
     return !!(q.source && q.source.includes('真题'));
   },
 
-  /* 提取题目的核心考点文本(用于高频统计)
-     归一化:仅保留中文、字母、数字,并去掉开头的序号 */
-  extractKeyPoint(stem) {
-    if (!stem) return '';
-    const lines = stem.split('\n').map(s => s.trim()).filter(Boolean);
-    let last = lines[lines.length - 1] || '';
-    last = last.replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g, '');
-    last = last.replace(/^[0-9]+/, '');
-    return last;
-  },
-
-  /* 统计核心考点跨年份出现频次 */
-  buildFrequency(questions) {
-    const freq = {};
-    const yearsByKey = {};
-    questions.forEach(q => {
-      const key = this.extractKeyPoint(q.stem);
-      if (key.length < 2) return;
-      freq[key] = (freq[key] || 0) + 1;
-      if (!yearsByKey[key]) yearsByKey[key] = new Set();
-      const y = this.getQuestionYear(q);
-      if (y) yearsByKey[key].add(y);
-    });
-    const out = {};
-    Object.keys(freq).forEach(k => {
-      out[k] = { count: freq[k], years: yearsByKey[k] ? yearsByKey[k].size : 0 };
-    });
-    return out;
-  },
-
-  /* 单题是否为严选题目
-     规则(可被题目内 curated 字段覆盖):
-     1. curated === true  -> 严选
-     2. curated === false -> 不进入严选
-     3. 自动判定:含答案或解析(优质题) 或 考点跨≥2年出现(考频高) */
-  isCurated(q, freq) {
-    if (q.curated === true) return true;
-    if (q.curated === false) return false;
-    if ((q.analysis && q.analysis.trim()) || (q.answer && q.answer.trim())) return true;
-    if (freq) {
-      const key = this.extractKeyPoint(q.stem);
-      const info = freq[key];
-      if (info && info.years >= 2) return true;
+  /* 加载严选索引(预生成, 见 tools/build-curated-index.js)
+     避免练习页为统计考频而加载全部题库文件 */
+  async loadCuratedIndex() {
+    if (this._curatedIndex) return this._curatedIndex;
+    try {
+      const res = await fetch('data/curated-index.json?v=5');
+      this._curatedIndex = res.ok ? await res.json() : { curated: {}, frequency: {}, totals: {} };
+    } catch (e) {
+      console.error('加载严选索引失败:', e);
+      this._curatedIndex = { curated: {}, frequency: {}, totals: {} };
     }
-    return false;
+    return this._curatedIndex;
+  },
+
+  /* 某章节的严选题目 ID 集合 */
+  async getCuratedSet(chapterId) {
+    const index = await this.loadCuratedIndex();
+    return new Set((index.curated && index.curated[chapterId]) || []);
   },
 
   /* 按范围过滤题目
      scope: all(完整) | curated(严选) | past(真题) */
-  filterByScope(questions, scope, freq) {
-    if (scope === 'curated') return questions.filter(q => this.isCurated(q, freq));
+  filterByScope(questions, scope, curatedSet) {
+    if (scope === 'curated') return questions.filter(q => curatedSet.has(q.id));
     if (scope === 'past') return questions.filter(q => this.isPastQuestion(q));
     return questions;
   },

@@ -4,7 +4,7 @@ const PracticePage = {
   chapter: null,
   questions: [],
   allChapters: [],
-  freq: {},
+  curatedSet: new Set(),
   scope: 'all', // all(完整) / curated(严选) / past(真题)
 
   async init() {
@@ -19,7 +19,7 @@ const PracticePage = {
     this.chapter = await DataLoader.getChapter(this.chapterId);
     const data = await DataLoader.loadQuestions(this.chapterId);
     this.questions = data.questions || [];
-    this.freq = DataLoader.buildFrequency(await DataLoader.getAllQuestions());
+    this.curatedSet = await DataLoader.getCuratedSet(this.chapterId);
     Storage.setLastChapter(this.chapterId);
 
     // 支持从侧边栏带入范围
@@ -36,8 +36,8 @@ const PracticePage = {
     const total = this.questions.length;
     const stats = {
       all: this.questions.length,
-      curated: DataLoader.filterByScope(this.questions, 'curated', this.freq).length,
-      past: DataLoader.filterByScope(this.questions, 'past', this.freq).length
+      curated: DataLoader.filterByScope(this.questions, 'curated', this.curatedSet).length,
+      past: DataLoader.filterByScope(this.questions, 'past', this.curatedSet).length
     };
 
     // 上一节/下一节
@@ -86,7 +86,7 @@ const PracticePage = {
   },
 
   getFilteredQuestions() {
-    return DataLoader.filterByScope(this.questions, this.scope, this.freq);
+    return DataLoader.filterByScope(this.questions, this.scope, this.curatedSet);
   },
 
   renderQuestions() {
@@ -143,7 +143,7 @@ const PracticePage = {
           <div class="row" style="gap:10px;">
             <span class="q-number">第 ${idx + 1} 题</span>
             <span class="q-source">${App.escapeHtml(q.source || '')}</span>
-            ${DataLoader.isCurated(q, this.freq) ? '<span class="badge badge-orange">严选</span>' : ''}
+            ${this.curatedSet.has(q.id) ? '<span class="badge badge-orange">严选</span>' : ''}
             ${hasAnswer ? '<span class="badge badge-green">有答案</span>' : ''}
             ${hasAnalysis ? '<span class="badge badge-blue">有解析</span>' : ''}
           </div>
