@@ -96,6 +96,71 @@ const Dashboard = {
     `;
   },
 
+  /* 通知:汇总本机可执行的待办提醒 */
+  async getNotifications(chapters) {
+    const items = [];
+
+    // 到期的错题复测
+    const due = Storage.getDueRetest();
+    if (due.length) {
+      items.push({
+        icon: '🔄',
+        text: `${due.length} 道错题今日到期,建议复测`,
+        link: 'retest.html'
+      });
+    }
+
+    // 收藏了但尚未掌握
+    const favorites = Storage.getFavorites();
+    if (favorites.length) {
+      const pending = favorites.filter(f => Storage.getMasteryStatus(f.chapterId, f.id) !== 'mastered');
+      if (pending.length) {
+        items.push({
+          icon: '⭐',
+          text: `收藏本中有 ${pending.length} 道题还未标记掌握`,
+          link: 'favorites.html'
+        });
+      }
+    }
+
+    // 做了一半的章节
+    const totals = await DataLoader.getChapterTotals();
+    const inProgress = chapters
+      .map(c => ({ c, done: Storage.getChapterProgress(c.id).length, total: totals[c.id] || 0 }))
+      .filter(x => x.done > 0 && x.done < x.total);
+    if (inProgress.length) {
+      const first = inProgress[0];
+      items.push({
+        icon: '📘',
+        text: `《${first.c.name}》已完成 ${first.done}/${first.total} 题,还没做完`,
+        link: `practice.html?chapter=${encodeURIComponent(first.c.id)}`
+      });
+    }
+
+    return items;
+  },
+
+  renderNotificationCard(items) {
+    return `
+      <div class="card" style="margin-bottom:20px;">
+        <div class="row-between" style="margin-bottom:14px;">
+          <h2 style="font-size:17px;">通知</h2>
+          <a class="text-secondary text-sm" href="learning-records.html">查看学习记录 →</a>
+        </div>
+        ${items.length === 0
+          ? '<p class="text-secondary text-sm">暂无新通知。开始练习后,待复测、未掌握的收藏题和没做完的章节会在这里提醒你。</p>'
+          : items.map(it => `
+              <div class="notice-item">
+                <span class="notice-icon">${it.icon}</span>
+                <span class="notice-text">${App.escapeHtml(it.text)}</span>
+                <a class="btn btn-secondary btn-sm" href="${it.link}">去看看</a>
+              </div>
+            `).join('')
+        }
+      </div>
+    `;
+  },
+
   /* 渲染仪表盘卡片组 HTML */
   async renderCards(chapters) {
     const daysLeft = Storage.getDaysLeft();
@@ -195,9 +260,11 @@ const HomePage = {
     });
 
     const activeDays = Storage.getActiveDayCount();
+    const notifications = await Dashboard.getNotifications(chapters);
 
     main.innerHTML = `
       ${cardsHtml}
+      ${Dashboard.renderNotificationCard(notifications)}
       <div class="card" style="margin-bottom:20px;">
         <div class="row-between" style="margin-bottom:14px;">
           <h2 style="font-size:17px;">学习活动</h2>

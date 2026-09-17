@@ -7,7 +7,7 @@ const DataLoader = {
   async loadCategories() {
     if (this._categories) return this._categories;
     try {
-      const res = await fetch('data/categories.json?v=6');
+      const res = await fetch('data/categories.json?v=7');
       this._categories = await res.json();
       return this._categories;
     } catch (e) {
@@ -19,7 +19,7 @@ const DataLoader = {
   async loadQuestions(chapterId) {
     if (this._questionCache[chapterId]) return this._questionCache[chapterId];
     try {
-      const res = await fetch(`data/questions/${chapterId}.json?v=6`);
+      const res = await fetch(`data/questions/${chapterId}.json?v=7`);
       if (!res.ok) {
         // 找不到文件时返回空
         return { chapterId, chapterName: '', questions: [] };
@@ -115,7 +115,7 @@ const DataLoader = {
   async loadCuratedIndex() {
     if (this._curatedIndex) return this._curatedIndex;
     try {
-      const res = await fetch('data/curated-index.json?v=6');
+      const res = await fetch('data/curated-index.json?v=7');
       this._curatedIndex = res.ok ? await res.json() : { curated: {}, frequency: {}, totals: {} };
     } catch (e) {
       console.error('加载严选索引失败:', e);

@@ -668,6 +668,27 @@ ul, ol { list-style: none; }
 .chip:hover { background: var(--bg-hover); }
 .chip.active { background: var(--accent); color: #fff; }
 
+/* 通知条目 */
+.notice-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.notice-item:last-child { border-bottom: none; }
+.notice-icon {
+  width: 30px; height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  font-size: 14px;
+}
+.notice-text { flex: 1; font-size: 13px; min-width: 0; }
+
 /* 设置页:选项卡片 */
 .setting-options {
   display: grid;
