@@ -7,7 +7,7 @@ const DataLoader = {
   async loadCategories() {
     if (this._categories) return this._categories;
     try {
-      const res = await fetch('data/categories.json?v=7');
+      const res = await fetch('data/categories.json?v=8');
       this._categories = await res.json();
       return this._categories;
     } catch (e) {
@@ -18,19 +18,22 @@ const DataLoader = {
 
   async loadQuestions(chapterId) {
     if (this._questionCache[chapterId]) return this._questionCache[chapterId];
+    let result;
     try {
-      const res = await fetch(`data/questions/${chapterId}.json?v=7`);
+      const res = await fetch(`data/questions/${chapterId}.json?v=8`);
       if (!res.ok) {
-        // 找不到文件时返回空
-        return { chapterId, chapterName: '', questions: [] };
+        // 题目文件尚未录入(分类里已有该章节, 但还没有题库文件)
+        result = { chapterId, chapterName: '', questions: [], missing: true };
+      } else {
+        result = await res.json();
       }
-      const data = await res.json();
-      this._questionCache[chapterId] = data;
-      return data;
     } catch (e) {
       console.error(`加载题目失败 (${chapterId}):`, e);
-      return { chapterId, chapterName: '', questions: [] };
+      result = { chapterId, chapterName: '', questions: [], missing: true };
     }
+    // 缓存(含未录入的情况), 避免重复请求
+    this._questionCache[chapterId] = result;
+    return result;
   },
 
   /* 获取所有章节的平铺列表（支持三级分类） */
@@ -115,7 +118,7 @@ const DataLoader = {
   async loadCuratedIndex() {
     if (this._curatedIndex) return this._curatedIndex;
     try {
-      const res = await fetch('data/curated-index.json?v=7');
+      const res = await fetch('data/curated-index.json?v=8');
       this._curatedIndex = res.ok ? await res.json() : { curated: {}, frequency: {}, totals: {} };
     } catch (e) {
       console.error('加载严选索引失败:', e);

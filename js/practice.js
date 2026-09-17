@@ -21,6 +21,7 @@ const PracticePage = {
     this.chapter = await DataLoader.getChapter(this.chapterId);
     const data = await DataLoader.loadQuestions(this.chapterId);
     this.questions = data.questions || [];
+    this.questionsMissing = !!data.missing;
     this.curatedSet = await DataLoader.getCuratedSet(this.chapterId);
     Storage.setLastChapter(this.chapterId);
 
@@ -112,6 +113,11 @@ const PracticePage = {
     const list = this.getFilteredQuestions();
 
     if (list.length === 0) {
+      // 题目文件尚未录入, 与"该范围无题目"区分开
+      if (this.questionsMissing) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">📝</div><h3>该章节题目尚未录入</h3><p>分类中已保留此章节, 题目文件还未添加。可先浏览其他章节。</p><a class="btn btn-primary" href="index.html">返回首页</a></div>`;
+        return;
+      }
       const tips = {
         curated: '该章节暂无严选题目,可在「完整」范围中查看全部题目',
         past: '该章节暂无真题',
