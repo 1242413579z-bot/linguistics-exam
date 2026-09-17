@@ -113,9 +113,11 @@ const App = {
     const totals = await DataLoader.getChapterTotals();
     const isPaperScope = scope === 'past';
 
-    // 三级分类(年份->试卷)属于真题卷, 只在"真题"范围出现;
-    // 二级分类(学科->章节)属于学科, 只在"完整/严选"范围出现。
-    const isPaperCategory = (cat) => (cat.children || []).some(ch => ch.children && ch.children.length);
+    // 试卷类分类(如南师大真题)只在"真题"范围出现;
+    // 学科类分类(学科->章节)只在"完整/严选"范围出现。
+    // 优先读分类上的 type 标记, 兜底用"年份->试卷"三级结构判断。
+    const isPaperCategory = (cat) => cat.type === 'papers' ||
+      (cat.children || []).some(ch => ch.children && ch.children.length);
     const visible = cats.categories.filter(cat => isPaperCategory(cat) === isPaperScope);
 
     let html = `<div class="sidebar-section-title">题库分类 · ${scopeLabel}</div>`;

@@ -128,6 +128,7 @@
       "id": "njsu-papers",
       "name": "南师大真题",
       "icon": "📜",
+      "type": "papers",
       "children": [
         {
           "id": "njsu-2009",
