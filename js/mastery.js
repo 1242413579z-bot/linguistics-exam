@@ -24,7 +24,8 @@ const MasteryPage = {
       <div class="mastery-tabs" id="category-tabs">
         <div class="mastery-tab active" data-cat="all">全部 <span class="count">${this.allQuestions.length}</span></div>
         ${cats.categories.map(c => {
-          const count = this.allQuestions.filter(q => q.parentName === c.name).length;
+          const ids = DataLoader.getCategoryChapterIds(c.id);
+          const count = this.allQuestions.filter(q => ids.includes(q.chapterId)).length;
           return `<div class="mastery-tab" data-cat="${c.id}">${c.icon || ''} ${App.escapeHtml(c.name)} <span class="count">${count}</span></div>`;
         }).join('')}
       </div>
@@ -56,26 +57,18 @@ const MasteryPage = {
     this.renderGrid();
   },
 
-  getFilteredQuestions() {
+  /* 当前分类下的题目(用于批量练习与网格) */
+  async getScopedQuestions() {
     if (this.currentCategory === 'all') return this.allQuestions;
-    const cat = this.allQuestions.filter(q => {
-      // 通过 chapterId 前缀匹配分类
-      return true;
-    });
-    // 更好的方式：通过分类获取子章节 id
-    return this.allQuestions; // 简化：前端全量，后续优化
+    await DataLoader.loadCategories();
+    const chapterIds = DataLoader.getCategoryChapterIds(this.currentCategory);
+    return this.allQuestions.filter(q => chapterIds.includes(q.chapterId));
   },
 
   async renderGrid() {
     const grid = document.getElementById('q-grid');
     const statusRow = document.getElementById('status-row');
-    let questions = this.allQuestions;
-
-    if (this.currentCategory !== 'all') {
-      await DataLoader.loadCategories();
-      const chapterIds = DataLoader.getCategoryChapterIds(this.currentCategory);
-      questions = questions.filter(q => chapterIds.includes(q.chapterId));
-    }
+    const questions = await this.getScopedQuestions();
 
     // 统计
     const counts = { unseen: 0, mastered: 0, unfamiliar: 0, unknown: 0 };
@@ -92,7 +85,8 @@ const MasteryPage = {
     `;
 
     document.getElementById('grid-count').textContent = `${questions.length} 题`;
-    document.getElementById('batch-count').textContent = questions.length;
+    // 批量练习:统计待巩固题数(未做/不熟练/不会)
+    document.getElementById('batch-count').textContent = counts.unseen + counts.unfamiliar + counts.unknown;
 
     // 渲染网格
     grid.innerHTML = questions.map(q => {
@@ -109,29 +103,33 @@ const MasteryPage = {
     });
   },
 
-  batchPractice() {
-    // 跳转到第一个未掌握的章节
-    const questions = this.currentCategory === 'all' ? this.allQuestions : this.allQuestions;
+  async batchPractice() {
+    // 在当前分类范围内跳到第一个未掌握的章节
+    const questions = await this.getScopedQuestions();
     const target = questions.find(q => {
       const s = Storage.getMasteryStatus(q.chapterId, q.id);
       return s === 'unseen' || s === 'unfamiliar' || s === 'unknown';
     });
     if (target) {
-      window.location.href = `practice.html?chapter=${target.chapterId}`;
+      window.location.href = `practice.html?chapter=${target.chapterId}&scope=${App.getScope()}`;
     } else {
-      alert('所有题目都已掌握！🎉');
+      alert(questions.length ? '该范围内所有题目都已掌握！🎉' : '该范围内暂无题目');
     }
   },
 
-  generateCard() {
+  async generateCard() {
+    const questions = await this.getScopedQuestions();
     const counts = { unseen: 0, mastered: 0, unfamiliar: 0, unknown: 0 };
-    this.allQuestions.forEach(q => {
+    questions.forEach(q => {
       const status = Storage.getMasteryStatus(q.chapterId, q.id);
-      counts[status]++;
+      counts[status] = (counts[status] || 0) + 1;
     });
-    const total = this.allQuestions.length;
+    const total = questions.length;
     const rate = total > 0 ? ((counts.mastered / total) * 100).toFixed(1) : 0;
-    alert(`掌握卡\n\n总题数：${total}\n完全掌握：${counts.mastered} (${rate}%)\n不熟练：${counts.unfamiliar}\n完全不会：${counts.unknown}\n未做过：${counts.unseen}`);
+    const catName = this.currentCategory === 'all'
+      ? '全部'
+      : (document.querySelector('.mastery-tab.active')?.textContent.trim() || '');
+    alert(`掌握卡 · ${catName}\n\n总题数：${total}\n完全掌握：${counts.mastered} (${rate}%)\n不熟练：${counts.unfamiliar}\n完全不会：${counts.unknown}\n未做过：${counts.unseen}`);
   }
 };
 

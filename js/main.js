@@ -45,13 +45,16 @@ const App = {
   ],
 
   getScope() {
-    return Storage.getSettings().scope || 'all';
+    return Storage.getSetting('scope', 'all');
   },
 
   setScope(scope) {
-    const settings = Storage.getSettings();
-    settings.scope = scope;
-    Storage.setSettings(settings);
+    Storage.setSetting('scope', scope);
+  },
+
+  /* 布局:classic(经典, 连续浏览) | focus(专注, 每次一题) */
+  getLayout() {
+    return Storage.getSetting('layout', 'classic');
   },
 
   async renderSidebar() {
@@ -64,6 +67,7 @@ const App = {
       <div class="sidebar-section">
         <div class="sidebar-section-title">学习概览</div>
         <a class="sidebar-link" href="index.html" data-page="index.html"><span class="icon">🏠</span>学习首页</a>
+        <a class="sidebar-link" href="knowledge.html" data-page="knowledge.html"><span class="icon">📖</span>知识目录</a>
         <a class="sidebar-link" href="learning-records.html" data-page="learning-records.html"><span class="icon">📊</span>学习记录</a>
       </div>
       <div class="sidebar-section">
@@ -81,6 +85,10 @@ const App = {
         <a class="sidebar-link" href="notes.html" data-page="notes.html"><span class="icon">📋</span>题目笔记</a>
       </div>
       <div class="sidebar-section" id="category-section"></div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">其他</div>
+        <a class="sidebar-link" href="settings.html" data-page="settings.html"><span class="icon">⚙️</span>设置</a>
+      </div>
     `;
 
     sidebar.innerHTML = html;

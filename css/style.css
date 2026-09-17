@@ -668,6 +668,107 @@ ul, ol { list-style: none; }
 .chip:hover { background: var(--bg-hover); }
 .chip.active { background: var(--accent); color: #fff; }
 
+/* 设置页:选项卡片 */
+.setting-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+}
+.setting-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.setting-option:hover { border-color: var(--text-tertiary); }
+.setting-option.active {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+.setting-option input { margin-top: 3px; accent-color: var(--accent); }
+.setting-option-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.setting-option-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+/* 知识目录 */
+.knowledge-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.knowledge-toc {
+  position: sticky;
+  top: calc(var(--header-height) + 16px);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  max-height: calc(100vh - var(--header-height) - 40px);
+  overflow-y: auto;
+}
+.knowledge-toc-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+.toc-group { margin-bottom: 10px; }
+.toc-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.toc-link {
+  display: block;
+  padding: 5px 8px 5px 22px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.toc-link:hover { background: var(--bg-hover); color: var(--text-primary); }
+.toc-link.active { color: var(--accent); background: var(--accent-bg); font-weight: 500; }
+
+.knowledge-section { margin-bottom: 24px; scroll-margin-top: calc(var(--header-height) + 16px); }
+.knowledge-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--accent-light);
+  flex-wrap: wrap;
+}
+.knowledge-chapter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+  scroll-margin-top: calc(var(--header-height) + 16px);
+}
+.knowledge-chapter:last-child { border-bottom: none; }
+.knowledge-chapter-main { flex: 1; min-width: 0; }
+.knowledge-chapter-name { font-size: 14px; margin-bottom: 6px; }
+.knowledge-chapter-meta { font-size: 12px; color: var(--text-tertiary); }
+
+@media (max-width: 900px) {
+  .knowledge-layout { grid-template-columns: 1fr; }
+  .knowledge-toc { position: static; max-height: none; }
+}
+
 /* 年份分组(真题范围) */
 .year-group { margin-bottom: 24px; }
 .year-group-title {

@@ -36,6 +36,15 @@ const Storage = {
   setSettings(settings) {
     return this.set('settings', settings);
   },
+  getSetting(key, defaultValue) {
+    const v = this.getSettings()[key];
+    return v === undefined ? defaultValue : v;
+  },
+  setSetting(key, value) {
+    const settings = this.getSettings();
+    settings[key] = value;
+    return this.setSettings(settings);
+  },
 
   /* ===== 收藏 ===== */
   getFavorites() {
@@ -74,6 +83,19 @@ const Storage = {
   },
   getMasteryTime(chapterId, questionId) {
     return this.get('masteryTimes', {})[`${chapterId}:${questionId}`] || 0;
+  },
+
+  /* 按章节汇总掌握状态(无需加载题库文件) */
+  getMasteryCountsByChapter() {
+    const out = {};
+    const mastery = this.getMastery();
+    Object.keys(mastery).forEach(key => {
+      const chapterId = key.slice(0, key.indexOf(':'));
+      if (!out[chapterId]) out[chapterId] = { mastered: 0, unfamiliar: 0, unknown: 0 };
+      const st = mastery[key];
+      if (out[chapterId][st] !== undefined) out[chapterId][st] += 1;
+    });
+    return out;
   },
 
   /* ===== 笔记 ===== */

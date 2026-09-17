@@ -6,6 +6,8 @@ const PracticePage = {
   allChapters: [],
   curatedSet: new Set(),
   scope: 'all', // all(完整) / curated(严选) / past(真题)
+  layout: 'classic', // classic(经典, 连续浏览) / focus(专注, 每次一题)
+  currentIndex: 0,
 
   async init() {
     this.chapterId = App.getQueryParam('chapter');
@@ -25,6 +27,10 @@ const PracticePage = {
     // 支持从侧边栏带入范围
     const urlScope = App.getQueryParam('scope');
     if (['all', 'curated', 'past'].includes(urlScope)) this.scope = urlScope;
+
+    // 布局(支持 URL 覆盖, 便于分享/直达)
+    const urlLayout = App.getQueryParam('layout');
+    this.layout = ['classic', 'focus'].includes(urlLayout) ? urlLayout : App.getLayout();
 
     this.render();
   },
@@ -52,8 +58,11 @@ const PracticePage = {
           <div class="practice-meta">已完成 ${doneCount} / ${total} 题</div>
         </div>
         <div class="practice-nav">
-          ${prev ? `<a class="btn btn-secondary" href="practice.html?chapter=${prev.id}">← 上一节</a>` : '<button class="btn btn-secondary" disabled>← 上一节</button>'}
-          ${next ? `<a class="btn btn-secondary" href="practice.html?chapter=${next.id}">下一节 →</a>` : '<button class="btn btn-secondary" disabled>下一节 →</button>'}
+          <button class="btn btn-secondary btn-sm" id="layout-toggle" title="切换经典/专注布局">
+            ${this.layout === 'focus' ? '经典布局' : '专注布局'}
+          </button>
+          ${prev ? `<a class="btn btn-secondary" href="practice.html?chapter=${prev.id}&scope=${this.scope}">← 上一节</a>` : '<button class="btn btn-secondary" disabled>← 上一节</button>'}
+          ${next ? `<a class="btn btn-secondary" href="practice.html?chapter=${next.id}&scope=${this.scope}">下一节 →</a>` : '<button class="btn btn-secondary" disabled>下一节 →</button>'}
         </div>
       </div>
 
@@ -66,12 +75,21 @@ const PracticePage = {
       <div id="questions-container"></div>
     `;
 
+    // 布局切换
+    document.getElementById('layout-toggle').addEventListener('click', () => {
+      this.layout = this.layout === 'focus' ? 'classic' : 'focus';
+      Storage.setSetting('layout', this.layout);
+      this.currentIndex = 0;
+      this.render();
+    });
+
     // 范围切换
     main.querySelectorAll('.scope-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         main.querySelectorAll('.scope-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         this.scope = tab.dataset.scope;
+        this.currentIndex = 0;
         // 同步到地址栏与侧边栏范围
         const url = new URL(window.location.href);
         url.searchParams.set('scope', this.scope);
@@ -104,7 +122,7 @@ const PracticePage = {
     }
 
     // 真题范围:按年份分组展示
-    if (this.scope === 'past') {
+    if (this.scope === 'past' && this.layout !== 'focus') {
       const groups = DataLoader.groupByYear(list);
       container.innerHTML = groups.map(g => `
         <div class="year-group">
@@ -112,10 +130,82 @@ const PracticePage = {
           ${g.questions.map((q, i) => this.renderQuestionCard(q, i)).join('')}
         </div>
       `).join('');
-    } else {
-      container.innerHTML = list.map((q, i) => this.renderQuestionCard(q, i)).join('');
+      this.bindQuestionEvents();
+      return;
     }
+
+    // 专注布局:每次一题 + 底部题号快速切换
+    if (this.layout === 'focus') {
+      if (this.currentIndex >= list.length) this.currentIndex = Math.max(0, list.length - 1);
+      if (this.currentIndex < 0) this.currentIndex = 0;
+      container.innerHTML = `
+        <div class="focus-wrap">
+          ${this.renderQuestionCard(list[this.currentIndex], this.currentIndex)}
+          ${this.renderFocusBar(list)}
+        </div>
+      `;
+      this.bindQuestionEvents();
+      this.bindFocusBar(list);
+      this.bindFocusKeyboard(list);
+      return;
+    }
+
+    container.innerHTML = list.map((q, i) => this.renderQuestionCard(q, i)).join('');
     this.bindQuestionEvents();
+  },
+
+  /* 底部题号快速切换条 */
+  renderFocusBar(list) {
+    return `
+      <div class="focus-bar">
+        <button class="focus-nav-btn" data-goto="prev" ${this.currentIndex === 0 ? 'disabled' : ''}>← 上一题</button>
+        <div class="focus-numbers">
+          ${list.map((q, i) => {
+            const st = Storage.getMasteryStatus(this.chapterId, q.id);
+            const cls = ['mastered', 'unfamiliar', 'unknown'].includes(st) ? st : '';
+            return `<button class="focus-num ${cls} ${i === this.currentIndex ? 'current' : ''}" data-goto-index="${i}" title="第 ${i + 1} 题">${i + 1}</button>`;
+          }).join('')}
+        </div>
+        <button class="focus-nav-btn" data-goto="next" ${this.currentIndex === list.length - 1 ? 'disabled' : ''}>下一题 →</button>
+      </div>
+    `;
+  },
+
+  bindFocusBar(list) {
+    const container = document.getElementById('questions-container');
+
+    const goto = (i) => {
+      this.currentIndex = Math.max(0, Math.min(list.length - 1, i));
+      this.renderQuestions();
+      document.querySelector('.practice-header')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    container.querySelectorAll('[data-goto-index]').forEach(btn => {
+      btn.addEventListener('click', () => goto(parseInt(btn.dataset.gotoIndex, 10)));
+    });
+    container.querySelectorAll('[data-goto]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        goto(btn.dataset.goto === 'prev' ? this.currentIndex - 1 : this.currentIndex + 1);
+      });
+    });
+  },
+
+  /* 左右方向键切换题目(专注布局) */
+  bindFocusKeyboard(list) {
+    if (this._keyHandler) document.removeEventListener('keydown', this._keyHandler);
+    this._keyHandler = (e) => {
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+      if (this.layout !== 'focus') return;
+      if (e.key === 'ArrowLeft' && this.currentIndex > 0) {
+        this.currentIndex -= 1;
+        this.renderQuestions();
+      } else if (e.key === 'ArrowRight' && this.currentIndex < list.length - 1) {
+        this.currentIndex += 1;
+        this.renderQuestions();
+      }
+    };
+    document.addEventListener('keydown', this._keyHandler);
   },
 
   renderQuestionCard(q, idx) {
@@ -247,6 +337,12 @@ const PracticePage = {
         Storage.recordActivity(1);
         // 更新进度计数
         this.updateProgressCount();
+        // 专注布局:判定后自动进入下一题
+        if (this.layout === 'focus') {
+          const total = this.getFilteredQuestions().length;
+          if (this.currentIndex < total - 1) this.currentIndex += 1;
+          this.renderQuestions();
+        }
       });
     });
 

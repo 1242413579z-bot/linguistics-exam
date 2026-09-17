@@ -84,10 +84,13 @@ function main() {
 
   // 逐章节计算严选题目
   const curated = {};
+  const chapterTotals = {};
   let curatedTotal = 0;
   chapters.forEach(ch => {
     const ids = [];
-    (questionsByChapter[ch.id] || []).forEach(q => {
+    const qs = questionsByChapter[ch.id] || [];
+    chapterTotals[ch.id] = qs.length;
+    qs.forEach(q => {
       let hit;
       if (q.curated === true) hit = true;
       else if (q.curated === false) hit = false;
@@ -110,6 +113,8 @@ function main() {
       curated: curatedTotal,
       past: all.filter(isPastQuestion).length
     },
+    /* 每章题目总数(供知识目录/掌握地图等免加载题库使用) */
+    chapterTotals,
     frequency,
     curated
   };

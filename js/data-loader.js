@@ -7,7 +7,7 @@ const DataLoader = {
   async loadCategories() {
     if (this._categories) return this._categories;
     try {
-      const res = await fetch('data/categories.json?v=5');
+      const res = await fetch('data/categories.json?v=6');
       this._categories = await res.json();
       return this._categories;
     } catch (e) {
@@ -19,7 +19,7 @@ const DataLoader = {
   async loadQuestions(chapterId) {
     if (this._questionCache[chapterId]) return this._questionCache[chapterId];
     try {
-      const res = await fetch(`data/questions/${chapterId}.json?v=5`);
+      const res = await fetch(`data/questions/${chapterId}.json?v=6`);
       if (!res.ok) {
         // 找不到文件时返回空
         return { chapterId, chapterName: '', questions: [] };
@@ -115,7 +115,7 @@ const DataLoader = {
   async loadCuratedIndex() {
     if (this._curatedIndex) return this._curatedIndex;
     try {
-      const res = await fetch('data/curated-index.json?v=5');
+      const res = await fetch('data/curated-index.json?v=6');
       this._curatedIndex = res.ok ? await res.json() : { curated: {}, frequency: {}, totals: {} };
     } catch (e) {
       console.error('加载严选索引失败:', e);
@@ -128,6 +128,12 @@ const DataLoader = {
   async getCuratedSet(chapterId) {
     const index = await this.loadCuratedIndex();
     return new Set((index.curated && index.curated[chapterId]) || []);
+  },
+
+  /* 各章题目总数(免加载题库文件) */
+  async getChapterTotals() {
+    const index = await this.loadCuratedIndex();
+    return index.chapterTotals || {};
   },
 
   /* 按范围过滤题目

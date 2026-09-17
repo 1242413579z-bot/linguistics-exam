@@ -193,3 +193,73 @@
   margin-top: 8px;
   font-size: 13px;
 }
+
+/* ===== 专注布局:每次一题 + 底部题号快速切换 ===== */
+.focus-wrap { padding-bottom: 12px; }
+.focus-wrap .q-card { margin-bottom: 0; }
+
+.focus-bar {
+  position: sticky;
+  bottom: 0;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+.focus-nav-btn {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.focus-nav-btn:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+.focus-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.focus-numbers {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0;
+  scrollbar-width: thin;
+}
+.focus-num {
+  flex-shrink: 0;
+  width: 30px; height: 30px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.focus-num:hover { background: var(--bg-hover); color: var(--text-primary); }
+.focus-num.current {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.focus-num.mastered { background: var(--success-light); color: var(--success); }
+.focus-num.unfamiliar { background: var(--warning-light); color: var(--warning); }
+.focus-num.unknown { background: var(--danger-light); color: var(--danger); }
+.focus-num.current.mastered { background: var(--success); color: #fff; }
+.focus-num.current.unfamiliar { background: var(--warning); color: #fff; }
+.focus-num.current.unknown { background: var(--danger); color: #fff; }
+
+@media (max-width: 768px) {
+  .focus-bar { flex-wrap: wrap; }
+  .focus-numbers { order: 3; flex-basis: 100%; }
+}
