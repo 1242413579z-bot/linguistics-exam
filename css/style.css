@@ -414,6 +414,7 @@ ul, ol { list-style: none; }
 .mt-24 { margin-top: 24px; }
 .flex-1 { flex: 1; }
 .text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
 .text-sm { font-size: 13px; }
 .text-xs { font-size: 12px; }
 

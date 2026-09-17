@@ -171,18 +171,22 @@ const Dashboard = {
     const totalCount = Storage.getTotalCount();
     const activeDays = Storage.getActiveDayCount();
 
-    // 继续学习:优先上次学习章节,否则第一个章节
+    // 继续学习:优先上次学习章节,否则第一个有题目的章节
+    // (题量取自预生成索引, 首页无需加载任何题库文件)
+    const totals = await DataLoader.getChapterTotals();
+    const hasQuestions = (c) => (totals[c.id] || 0) > 0;
+
     const last = Storage.getLastChapter();
     let target = null;
-    if (last && chapters.some(c => c.id === last.chapterId)) {
-      target = chapters.find(c => c.id === last.chapterId);
+    if (last) {
+      const lastChapter = chapters.find(c => c.id === last.chapterId);
+      if (lastChapter && hasQuestions(lastChapter)) target = lastChapter;
     }
-    if (!target) target = chapters[0];
+    if (!target) target = chapters.find(hasQuestions) || chapters[0];
 
     let continueCard = '';
     if (target) {
-      const data = await DataLoader.loadQuestions(target.id);
-      const total = data.questions.length;
+      const total = totals[target.id] || 0;
       const done = Storage.getChapterProgress(target.id).length;
       const percent = total ? Math.round((done / total) * 100) : 0;
       const lastTime = last && last.chapterId === target.id ? last.time : 0;
@@ -236,6 +240,14 @@ const HomePage = {
 
     const cardsHtml = await Dashboard.renderCards(chapters);
     const cats = await DataLoader.loadCategories();
+    const totals = await DataLoader.getChapterTotals();
+
+    // 章节条目右侧标注:已做题数 / 尚未录入题目
+    const chapterMeta = (id) => {
+      if (!(totals[id] > 0)) return '<span class="text-tertiary text-xs"> · 待录入</span>';
+      const done = Storage.getChapterProgress(id).length;
+      return done ? `<span class="text-secondary text-xs"> · 已做 ${done}</span>` : '';
+    };
 
     // 章节网格
     let gridHtml = '';
@@ -247,13 +259,12 @@ const HomePage = {
         if (child.children) {
           gridHtml += `<details class="year-picker">
             <summary>${App.escapeHtml(child.name)}<span class="text-secondary">${child.children.length} 套试卷</span></summary>
-            <div class="year-papers">${child.children.map(paper => {
-              const done = Storage.getChapterProgress(paper.id).length;
-              return `<a class="chapter-entry" href="practice.html?chapter=${encodeURIComponent(paper.id)}">${App.escapeHtml(paper.name)}${done ? `<span class="text-secondary text-xs"> · 已做 ${done}</span>` : ''}</a>`;
-            }).join('')}</div>
+            <div class="year-papers">${child.children.map(paper => `
+              <a class="chapter-entry" href="practice.html?chapter=${encodeURIComponent(paper.id)}">${App.escapeHtml(paper.name)}${chapterMeta(paper.id)}</a>
+            `).join('')}</div>
           </details>`;
         } else {
-          gridHtml += `<a class="chapter-entry" href="practice.html?chapter=${encodeURIComponent(child.id)}">${App.escapeHtml(child.name)}</a>`;
+          gridHtml += `<a class="chapter-entry" href="practice.html?chapter=${encodeURIComponent(child.id)}">${App.escapeHtml(child.name)}${chapterMeta(child.id)}</a>`;
         }
       });
       gridHtml += `</div></div>`;

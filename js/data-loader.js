@@ -7,7 +7,7 @@ const DataLoader = {
   async loadCategories() {
     if (this._categories) return this._categories;
     try {
-      const res = await fetch('data/categories.json?v=8');
+      const res = await fetch('data/categories.json?v=9');
       this._categories = await res.json();
       return this._categories;
     } catch (e) {
@@ -20,7 +20,7 @@ const DataLoader = {
     if (this._questionCache[chapterId]) return this._questionCache[chapterId];
     let result;
     try {
-      const res = await fetch(`data/questions/${chapterId}.json?v=8`);
+      const res = await fetch(`data/questions/${chapterId}.json?v=9`);
       if (!res.ok) {
         // 题目文件尚未录入(分类里已有该章节, 但还没有题库文件)
         result = { chapterId, chapterName: '', questions: [], missing: true };
@@ -118,7 +118,7 @@ const DataLoader = {
   async loadCuratedIndex() {
     if (this._curatedIndex) return this._curatedIndex;
     try {
-      const res = await fetch('data/curated-index.json?v=8');
+      const res = await fetch('data/curated-index.json?v=9');
       this._curatedIndex = res.ok ? await res.json() : { curated: {}, frequency: {}, totals: {} };
     } catch (e) {
       console.error('加载严选索引失败:', e);
