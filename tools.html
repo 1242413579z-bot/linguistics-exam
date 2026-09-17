@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -6,7 +6,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>工具区 - 语言学大观园</title>
-  <link rel="stylesheet" href="css/style.css?v=2">
+  <link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
   <div class="app-layout">
@@ -40,6 +40,17 @@
 
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;">
           <div class="card">
+            <h3 style="font-size:16px;margin-bottom:10px;">⏳ 考试倒计时设置</h3>
+            <p class="text-secondary text-sm" style="margin-bottom:16px;">设置目标考试日期后,首页倒计时卡片会据此自动计算天数。</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+              <input type="text" class="input" id="exam-name" placeholder="考试名称" style="flex:1;min-width:140px;">
+              <input type="date" class="input" id="exam-date" style="flex:1;min-width:150px;">
+            </div>
+            <button class="btn btn-primary" id="save-exam">保存设置</button>
+            <span class="text-secondary text-sm" id="exam-hint" style="margin-left:10px;"></span>
+          </div>
+
+          <div class="card">
             <h3 style="font-size:16px;margin-bottom:10px;">📄 数据导出</h3>
             <p class="text-secondary text-sm" style="margin-bottom:16px;">导出你的收藏、笔记、掌握状态等本地数据为 JSON 文件，方便备份。</p>
             <button class="btn btn-primary" id="export-btn">导出全部数据</button>
@@ -63,20 +74,46 @@
     </div>
   </div>
 
-  <script src="js/storage.js?v=2"></script>
-  <script src="js/data-loader.js?v=2"></script>
-  <script src="js/main.js?v=2"></script>
+  <script src="js/storage.js?v=4"></script>
+  <script src="js/data-loader.js?v=4"></script>
+  <script src="js/main.js?v=4"></script>
   <script>
+    // 考试倒计时设置
+    const examConfig = Storage.getExamConfig();
+    const nameInput = document.getElementById('exam-name');
+    const dateInput = document.getElementById('exam-date');
+    nameInput.value = examConfig.name || '';
+    dateInput.value = examConfig.date || '';
+
+    const refreshExamHint = () => {
+      document.getElementById('exam-hint').textContent = `当前:距${Storage.getExamConfig().name}还有 ${Storage.getDaysLeft()} 天`;
+    };
+    refreshExamHint();
+
+    document.getElementById('save-exam').addEventListener('click', () => {
+      const name = nameInput.value.trim() || '考研初试';
+      const date = dateInput.value;
+      if (!date) { alert('请选择考试日期'); return; }
+      Storage.setExamConfig({ name, date });
+      refreshExamHint();
+      alert('已保存');
+    });
+
     // 数据导出
     document.getElementById('export-btn').addEventListener('click', () => {
       const data = {
         exportedAt: new Date().toISOString(),
         favorites: Storage.getFavorites(),
         mastery: Storage.getMastery(),
+        masteryTimes: Storage.get('masteryTimes', {}),
         notes: Storage.getNotes(),
         retest: Storage.getRetestList(),
         progress: Storage.getProgress(),
         userAnswers: Storage.getUserAnswers(),
+        dailyActivity: Storage.getDailyActivity(),
+        lastChapter: Storage.getLastChapter(),
+        examConfig: Storage.getExamConfig(),
+        paperHistory: Storage.getPaperHistory(),
         settings: Storage.getSettings()
       };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -101,10 +138,15 @@
           const data = JSON.parse(ev.target.result);
           if (data.favorites) Storage.set('favorites', data.favorites);
           if (data.mastery) Storage.set('mastery', data.mastery);
+          if (data.masteryTimes) Storage.set('masteryTimes', data.masteryTimes);
           if (data.notes) Storage.set('notes', data.notes);
           if (data.retest) Storage.set('retest', data.retest);
           if (data.progress) Storage.set('progress', data.progress);
           if (data.userAnswers) Storage.set('userAnswers', data.userAnswers);
+          if (data.dailyActivity) Storage.set('dailyActivity', data.dailyActivity);
+          if (data.lastChapter) Storage.set('lastChapter', data.lastChapter);
+          if (data.examConfig) Storage.set('examConfig', data.examConfig);
+          if (data.paperHistory) Storage.set('paperHistory', data.paperHistory);
           if (data.settings) Storage.set('settings', data.settings);
           alert('导入成功！');
           location.reload();

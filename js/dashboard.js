@@ -1,0 +1,216 @@
+/* dashboard.js - 学习仪表盘组件(首页 + 学习记录页共用) */
+const Dashboard = {
+  /* 热力图强度分级:0 无 / 1 轻 / 2 中 / 3 高 / 4 很高 */
+  getLevel(count) {
+    if (count <= 0) return 0;
+    if (count <= 2) return 1;
+    if (count <= 5) return 2;
+    if (count <= 9) return 3;
+    return 4;
+  },
+
+  getLevelLabel(level) {
+    return ['无', '轻', '中', '高', '很高'][level] || '无';
+  },
+
+  /* 构建最近 N 天的逐日数据,并对齐到整周(周日起) */
+  buildWeeks(days = 182) {
+    const activity = Storage.getDailyActivity();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 起点:回溯 days 天,再往前对齐到周日
+    const start = new Date(today);
+    start.setDate(start.getDate() - (days - 1));
+    start.setDate(start.getDate() - start.getDay());
+
+    const cells = [];
+    const cursor = new Date(start);
+    while (cursor <= today) {
+      const key = Storage._dateKey(cursor.getTime());
+      cells.push({ date: key, count: activity[key] || 0, time: cursor.getTime() });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    // 按周切分(每 7 天一周)
+    const weeks = [];
+    for (let i = 0; i < cells.length; i += 7) {
+      weeks.push(cells.slice(i, i + 7));
+    }
+    return weeks;
+  },
+
+  /* 渲染热力图 HTML */
+  renderHeatmap(days = 182) {
+    const weeks = this.buildWeeks(days);
+    const todayKey = Storage._dateKey();
+
+    // 月份标签:找出每周第一天的月份,月份变化处打标
+    let monthLabels = '';
+    let lastMonth = -1;
+    weeks.forEach(week => {
+      const first = week[0];
+      const m = new Date(first.time).getMonth() + 1;
+      if (m !== lastMonth) {
+        monthLabels += `<span style="flex:0 0 auto;width:${week.length * 15}px;">${m}月</span>`;
+        lastMonth = m;
+      } else {
+        monthLabels += `<span style="flex:0 0 auto;width:${week.length * 15}px;"></span>`;
+      }
+    });
+
+    const cellsHtml = weeks.map(week => {
+      let col = '';
+      for (let i = 0; i < 7; i++) {
+        const cell = week[i];
+        if (!cell) {
+          col += '<div class="heat-cell empty"></div>';
+          continue;
+        }
+        if (cell.time > Date.now()) {
+          col += '<div class="heat-cell empty"></div>';
+          continue;
+        }
+        const level = this.getLevel(cell.count);
+        const isToday = cell.date === todayKey;
+        col += `<div class="heat-cell" data-level="${level}" title="${cell.date}:${cell.count} 次作答判定${isToday ? '(今天)' : ''}"${isToday ? ' style="outline:1px solid var(--accent);outline-offset:1px;"' : ''}></div>`;
+      }
+      return `<div style="display:grid;grid-template-rows:repeat(7,12px);gap:3px;">${col}</div>`;
+    }).join('');
+
+    return `
+      <div class="heatmap-wrap">
+        <div style="display:flex;gap:3px;font-size:11px;color:var(--text-tertiary);margin-bottom:6px;">${monthLabels}</div>
+        <div style="display:flex;gap:3px;">${cellsHtml}</div>
+      </div>
+      <div class="heat-legend">
+        <span>刷题强度</span>
+        <span>无</span>
+        <div class="heat-cell" data-level="0"></div>
+        <div class="heat-cell" data-level="1"></div>
+        <div class="heat-cell" data-level="2"></div>
+        <div class="heat-cell" data-level="3"></div>
+        <div class="heat-cell" data-level="4"></div>
+        <span>很高</span>
+      </div>
+    `;
+  },
+
+  /* 渲染仪表盘卡片组 HTML */
+  async renderCards(chapters) {
+    const daysLeft = Storage.getDaysLeft();
+    const exam = Storage.getExamConfig();
+    const todayCount = Storage.getTodayCount();
+    const streak = Storage.getStreak();
+    const maxStreak = Storage.getMaxStreak();
+    const totalCount = Storage.getTotalCount();
+    const activeDays = Storage.getActiveDayCount();
+
+    // 继续学习:优先上次学习章节,否则第一个章节
+    const last = Storage.getLastChapter();
+    let target = null;
+    if (last && chapters.some(c => c.id === last.chapterId)) {
+      target = chapters.find(c => c.id === last.chapterId);
+    }
+    if (!target) target = chapters[0];
+
+    let continueCard = '';
+    if (target) {
+      const data = await DataLoader.loadQuestions(target.id);
+      const total = data.questions.length;
+      const done = Storage.getChapterProgress(target.id).length;
+      const percent = total ? Math.round((done / total) * 100) : 0;
+      const lastTime = last && last.chapterId === target.id ? last.time : 0;
+      continueCard = `
+        <div class="dash-card continue-card" style="grid-column:span 2;">
+          <div class="dash-label">继续学习</div>
+          <div class="dash-value">${App.escapeHtml(target.parentName)} · ${App.escapeHtml(target.name)}</div>
+          <div class="dash-sub">
+            已完成 ${done} 题 · 还剩 ${Math.max(0, total - done)} 题
+            ${lastTime ? ' · 上次学习 ' + App.formatDate(lastTime) : ''}
+          </div>
+          <div class="progress-bar"><div class="fill" style="width:${percent}%"></div></div>
+          <a class="btn" href="practice.html?chapter=${encodeURIComponent(target.id)}">继续练习 →</a>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="dash-grid">
+        ${continueCard}
+        <div class="dash-card">
+          <div class="dash-label">考研倒计时</div>
+          <div class="dash-value accent">${daysLeft}<span class="unit">天</span></div>
+          <div class="dash-sub">${App.escapeHtml(exam.name)} · ${exam.date}</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-label">今日刷题数</div>
+          <div class="dash-value ${todayCount > 0 ? 'success' : ''}">${todayCount}<span class="unit">题</span></div>
+          <div class="dash-sub">累计作答 ${totalCount} 题</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-label">连续学习</div>
+          <div class="dash-value ${streak > 0 ? 'warning' : ''}">${streak}<span class="unit">天</span></div>
+          <div class="dash-sub">最长纪录 ${maxStreak} 天 · 共 ${activeDays} 个作答日</div>
+        </div>
+      </div>
+    `;
+  }
+};
+
+/* ===== 首页 ===== */
+const HomePage = {
+  async init() {
+    const main = document.getElementById('main-content');
+    const chapters = await DataLoader.getAllChapters();
+
+    if (!chapters.length) {
+      main.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><h3>暂无章节</h3><p>请先配置题目分类</p></div>';
+      return;
+    }
+
+    const cardsHtml = await Dashboard.renderCards(chapters);
+    const cats = await DataLoader.loadCategories();
+
+    // 章节网格
+    let gridHtml = '';
+    cats.categories.forEach(cat => {
+      gridHtml += `<div style="margin-bottom:20px;">
+        <h3 style="font-size:15px;color:var(--text-secondary);margin-bottom:10px;">${cat.icon || '📁'} ${App.escapeHtml(cat.name)}</h3>
+        <div class="chapter-grid">`;
+      (cat.children || []).forEach(child => {
+        if (child.children) {
+          gridHtml += `<details class="year-picker">
+            <summary>${App.escapeHtml(child.name)}<span class="text-secondary">${child.children.length} 套试卷</span></summary>
+            <div class="year-papers">${child.children.map(paper => {
+              const done = Storage.getChapterProgress(paper.id).length;
+              return `<a class="chapter-entry" href="practice.html?chapter=${encodeURIComponent(paper.id)}">${App.escapeHtml(paper.name)}${done ? `<span class="text-secondary text-xs"> · 已做 ${done}</span>` : ''}</a>`;
+            }).join('')}</div>
+          </details>`;
+        } else {
+          gridHtml += `<a class="chapter-entry" href="practice.html?chapter=${encodeURIComponent(child.id)}">${App.escapeHtml(child.name)}</a>`;
+        }
+      });
+      gridHtml += `</div></div>`;
+    });
+
+    const activeDays = Storage.getActiveDayCount();
+
+    main.innerHTML = `
+      ${cardsHtml}
+      <div class="card" style="margin-bottom:20px;">
+        <div class="row-between" style="margin-bottom:14px;">
+          <h2 style="font-size:17px;">学习活动</h2>
+          <span class="text-secondary text-sm">每日作答 · 已记录 ${activeDays} 个作答日</span>
+        </div>
+        ${Dashboard.renderHeatmap()}
+      </div>
+      <div class="card">
+        <h2 style="font-size:17px;margin-bottom:16px;">题库分类</h2>
+        ${gridHtml}
+      </div>
+    `;
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => HomePage.init());

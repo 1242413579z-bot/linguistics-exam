@@ -4,13 +4,14 @@ const PracticePage = {
   chapter: null,
   questions: [],
   allChapters: [],
-  scope: 'all', // all / core / past
+  freq: {},
+  scope: 'all', // all(完整) / curated(严选) / past(真题)
 
   async init() {
     this.chapterId = App.getQueryParam('chapter');
     if (!this.chapterId) {
       document.getElementById('main-content').innerHTML = 
-        '<div class="empty-state"><div class="empty-icon">📋</div><h3>未选择章节</h3><p>请从侧边栏选择一个章节开始练习</p><a class="btn btn-primary" href="index.html">返回首页</a></div>';
+        '<div class="empty-state"><div class="empty-icon">\u{1F4CB}</div><h3>未选择章节</h3><p>请从侧边栏选择一个章节开始练习</p><a class="btn btn-primary" href="index.html">返回首页</a></div>';
       return;
     }
 
@@ -18,6 +19,12 @@ const PracticePage = {
     this.chapter = await DataLoader.getChapter(this.chapterId);
     const data = await DataLoader.loadQuestions(this.chapterId);
     this.questions = data.questions || [];
+    this.freq = DataLoader.buildFrequency(await DataLoader.getAllQuestions());
+    Storage.setLastChapter(this.chapterId);
+
+    // 支持从侧边栏带入范围
+    const urlScope = App.getQueryParam('scope');
+    if (['all', 'curated', 'past'].includes(urlScope)) this.scope = urlScope;
 
     this.render();
   },
@@ -27,6 +34,11 @@ const PracticePage = {
     const progress = Storage.getChapterProgress(this.chapterId);
     const doneCount = progress.length;
     const total = this.questions.length;
+    const stats = {
+      all: this.questions.length,
+      curated: DataLoader.filterByScope(this.questions, 'curated', this.freq).length,
+      past: DataLoader.filterByScope(this.questions, 'past', this.freq).length
+    };
 
     // 上一节/下一节
     const idx = this.allChapters.findIndex(c => c.id === this.chapterId);
@@ -46,9 +58,9 @@ const PracticePage = {
       </div>
 
       <div class="scope-tabs">
-        <div class="scope-tab active" data-scope="all">完整</div>
-        <div class="scope-tab" data-scope="core">核心</div>
-        <div class="scope-tab" data-scope="past">真题</div>
+        <div class="scope-tab ${this.scope === 'all' ? 'active' : ''}" data-scope="all">完整 <span class="scope-count">${stats.all}</span></div>
+        <div class="scope-tab ${this.scope === 'curated' ? 'active' : ''}" data-scope="curated">严选 <span class="scope-count">${stats.curated}</span></div>
+        <div class="scope-tab ${this.scope === 'past' ? 'active' : ''}" data-scope="past">真题 <span class="scope-count">${stats.past}</span></div>
       </div>
 
       <div id="questions-container"></div>
@@ -60,6 +72,12 @@ const PracticePage = {
         main.querySelectorAll('.scope-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         this.scope = tab.dataset.scope;
+        // 同步到地址栏与侧边栏范围
+        const url = new URL(window.location.href);
+        url.searchParams.set('scope', this.scope);
+        window.history.replaceState(null, '', url);
+        App.setScope(this.scope);
+        document.querySelectorAll('.scope-chip').forEach(c => c.classList.toggle('active', c.dataset.scope === this.scope));
         this.renderQuestions();
       });
     });
@@ -68,10 +86,7 @@ const PracticePage = {
   },
 
   getFilteredQuestions() {
-    if (this.scope === 'all') return this.questions;
-    if (this.scope === 'past') return this.questions.filter(q => q.source && q.source.includes('真题'));
-    // core: 非真题
-    return this.questions.filter(q => !q.source || !q.source.includes('真题'));
+    return DataLoader.filterByScope(this.questions, this.scope, this.freq);
   },
 
   renderQuestions() {
@@ -79,11 +94,27 @@ const PracticePage = {
     const list = this.getFilteredQuestions();
 
     if (list.length === 0) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><h3>暂无题目</h3><p>该范围下没有题目</p></div>';
+      const tips = {
+        curated: '该章节暂无严选题目,可在「完整」范围中查看全部题目',
+        past: '该章节暂无真题',
+        all: '该范围下没有题目'
+      };
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><h3>暂无题目</h3><p>${tips[this.scope] || '该范围下没有题目'}</p></div>`;
       return;
     }
 
-    container.innerHTML = list.map((q, idx) => this.renderQuestionCard(q, idx)).join('');
+    // 真题范围:按年份分组展示
+    if (this.scope === 'past') {
+      const groups = DataLoader.groupByYear(list);
+      container.innerHTML = groups.map(g => `
+        <div class="year-group">
+          <div class="year-group-title">${g.year ? g.year + ' 年真题' : '真题'}<span class="text-secondary text-sm">${g.questions.length} 题</span></div>
+          ${g.questions.map((q, i) => this.renderQuestionCard(q, i)).join('')}
+        </div>
+      `).join('');
+    } else {
+      container.innerHTML = list.map((q, i) => this.renderQuestionCard(q, i)).join('');
+    }
     this.bindQuestionEvents();
   },
 
@@ -103,6 +134,8 @@ const PracticePage = {
 
     const answerContent = userAns.answer || q.answer || '';
     const analysisContent = userAns.analysis || q.analysis || '';
+    const hasAnswer = !!answerContent;
+    const hasAnalysis = !!analysisContent;
 
     return `
       <div class="q-card" data-qid="${q.id}">
@@ -110,6 +143,9 @@ const PracticePage = {
           <div class="row" style="gap:10px;">
             <span class="q-number">第 ${idx + 1} 题</span>
             <span class="q-source">${App.escapeHtml(q.source || '')}</span>
+            ${DataLoader.isCurated(q, this.freq) ? '<span class="badge badge-orange">严选</span>' : ''}
+            ${hasAnswer ? '<span class="badge badge-green">有答案</span>' : ''}
+            ${hasAnalysis ? '<span class="badge badge-blue">有解析</span>' : ''}
           </div>
           <div class="q-actions">
             <button class="q-action-btn ${isFav ? 'favorited' : ''}" data-action="favorite" title="收藏">${isFav ? '★' : '☆'}</button>
@@ -128,15 +164,15 @@ const PracticePage = {
 
         <div class="answer-section">
           <div class="answer-toggle">
-            <button class="toggle-btn-sm" data-toggle="answer">查看答案</button>
-            <button class="toggle-btn-sm" data-toggle="analysis">查看解析</button>
+            <button class="toggle-btn-sm ${hasAnswer ? 'active' : ''}" data-toggle="answer">${hasAnswer ? '收起答案' : '查看答案'}</button>
+            <button class="toggle-btn-sm ${hasAnalysis ? 'active' : ''}" data-toggle="analysis">${hasAnalysis ? '收起解析' : '查看解析'}</button>
             <button class="toggle-btn-sm" data-toggle="edit">编辑答案/解析</button>
           </div>
-          <div class="answer-content" id="answer-${q.id}">
+          <div class="answer-content ${hasAnswer ? 'show' : ''}" id="answer-${q.id}">
             <div class="answer-label">答案</div>
             <div class="answer-text">${answerContent ? App.escapeHtml(answerContent) : '<span class="text-secondary">暂无答案，点击"编辑答案/解析"添加</span>'}</div>
           </div>
-          <div class="answer-content" id="analysis-${q.id}">
+          <div class="answer-content ${hasAnalysis ? 'show' : ''}" id="analysis-${q.id}">
             <div class="answer-label">解析</div>
             <div class="answer-text">${analysisContent ? App.escapeHtml(analysisContent) : '<span class="text-secondary">暂无解析</span>'}</div>
           </div>
@@ -207,6 +243,8 @@ const PracticePage = {
         });
         const cls = status === 'mastered' ? 'active-mastered' : status === 'unfamiliar' ? 'active-unfamiliar' : 'active-unknown';
         btn.classList.add(cls);
+        // 记录学习活动(今日刷题数 / 连续学习 / 热力图)
+        Storage.recordActivity(1);
         // 更新进度计数
         this.updateProgressCount();
       });
@@ -222,7 +260,8 @@ const PracticePage = {
         const isActive = btn.classList.contains('active');
         btn.classList.toggle('active');
         target.classList.toggle('show');
-        btn.textContent = isActive ? (type === 'answer' ? '查看答案' : type === 'analysis' ? '查看解析' : '编辑答案/解析') : '收起';
+        const labels = { answer: '答案', analysis: '解析', edit: '编辑答案/解析' };
+        btn.textContent = isActive ? `查看${labels[type]}` : `收起${type === 'edit' ? '' : labels[type]}`;
       });
     });
 

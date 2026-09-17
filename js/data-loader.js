@@ -94,5 +94,86 @@ const DataLoader = {
   /* 查找题目 */
   findQuestion(questions, questionId) {
     return questions.find(q => q.id === questionId);
+  },
+
+  /* ===== 题库三分类:完整 / 严选 / 真题 ===== */
+
+  /* 从题目来源中提取年份 (如 "2013年南师大611真题" -> 2013) */
+  getQuestionYear(q) {
+    const m = (q.source || '').match(/(19|20)\d{2}/);
+    return m ? parseInt(m[0], 10) : null;
+  },
+
+  /* 是否为真题 */
+  isPastQuestion(q) {
+    return !!(q.source && q.source.includes('真题'));
+  },
+
+  /* 提取题目的核心考点文本(用于高频统计)
+     归一化:仅保留中文、字母、数字,并去掉开头的序号 */
+  extractKeyPoint(stem) {
+    if (!stem) return '';
+    const lines = stem.split('\n').map(s => s.trim()).filter(Boolean);
+    let last = lines[lines.length - 1] || '';
+    last = last.replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g, '');
+    last = last.replace(/^[0-9]+/, '');
+    return last;
+  },
+
+  /* 统计核心考点跨年份出现频次 */
+  buildFrequency(questions) {
+    const freq = {};
+    const yearsByKey = {};
+    questions.forEach(q => {
+      const key = this.extractKeyPoint(q.stem);
+      if (key.length < 2) return;
+      freq[key] = (freq[key] || 0) + 1;
+      if (!yearsByKey[key]) yearsByKey[key] = new Set();
+      const y = this.getQuestionYear(q);
+      if (y) yearsByKey[key].add(y);
+    });
+    const out = {};
+    Object.keys(freq).forEach(k => {
+      out[k] = { count: freq[k], years: yearsByKey[k] ? yearsByKey[k].size : 0 };
+    });
+    return out;
+  },
+
+  /* 单题是否为严选题目
+     规则(可被题目内 curated 字段覆盖):
+     1. curated === true  -> 严选
+     2. curated === false -> 不进入严选
+     3. 自动判定:含答案或解析(优质题) 或 考点跨≥2年出现(考频高) */
+  isCurated(q, freq) {
+    if (q.curated === true) return true;
+    if (q.curated === false) return false;
+    if ((q.analysis && q.analysis.trim()) || (q.answer && q.answer.trim())) return true;
+    if (freq) {
+      const key = this.extractKeyPoint(q.stem);
+      const info = freq[key];
+      if (info && info.years >= 2) return true;
+    }
+    return false;
+  },
+
+  /* 按范围过滤题目
+     scope: all(完整) | curated(严选) | past(真题) */
+  filterByScope(questions, scope, freq) {
+    if (scope === 'curated') return questions.filter(q => this.isCurated(q, freq));
+    if (scope === 'past') return questions.filter(q => this.isPastQuestion(q));
+    return questions;
+  },
+
+  /* 将真题按年份分组,返回 [{year, questions}] 年份倒序 */
+  groupByYear(questions) {
+    const map = {};
+    questions.forEach(q => {
+      const y = this.getQuestionYear(q) || 0;
+      if (!map[y]) map[y] = [];
+      map[y].push(q);
+    });
+    return Object.keys(map)
+      .map(y => ({ year: parseInt(y, 10), questions: map[y] }))
+      .sort((a, b) => b.year - a.year);
   }
 };

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -6,7 +6,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>语言学大观园 - 首页</title>
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
   <div class="app-layout">
@@ -43,66 +43,9 @@
     </div>
   </div>
 
-  <script src="js/storage.js?v=3"></script>
-  <script src="js/data-loader.js?v=3"></script>
-  <script src="js/main.js?v=3"></script>
-  <script>
-    // 首页逻辑
-    document.addEventListener('DOMContentLoaded', async () => {
-      const main = document.getElementById('main-content');
-      const chapters = await DataLoader.getAllChapters();
-      
-      // 默认显示第一个章节
-      const defaultChapter = chapters[0];
-      if (defaultChapter) {
-        const data = await DataLoader.loadQuestions(defaultChapter.id);
-        const progress = Storage.getChapterProgress(defaultChapter.id);
-        const mastered = progress.length;
-        const total = data.questions.length;
-
-        main.innerHTML = `
-          <div class="card" style="margin-bottom:20px;">
-            <div class="row-between">
-              <div>
-                <h1 style="font-size:24px;margin-bottom:8px;">${App.escapeHtml(defaultChapter.parentName)} · ${App.escapeHtml(defaultChapter.name)}</h1>
-                <p class="text-secondary">共 ${total} 题，已完成 ${mastered} 题</p>
-              </div>
-              <a class="btn btn-primary btn-lg" href="practice.html?chapter=${defaultChapter.id}">练习这一节 →</a>
-            </div>
-          </div>
-          <div class="card">
-            <h2 style="font-size:18px;margin-bottom:16px;">选择其他章节</h2>
-            <div id="chapter-grid"></div>
-          </div>
-        `;
-
-        // 渲染章节网格
-        const grid = document.getElementById('chapter-grid');
-        const cats = await DataLoader.loadCategories();
-        let html = '';
-        cats.categories.forEach(cat => {
-          html += `<div style="margin-bottom:20px;">
-            <h3 style="font-size:15px;color:var(--text-secondary);margin-bottom:10px;">${cat.icon || '📁'} ${App.escapeHtml(cat.name)}</h3>
-            <div class="chapter-grid">`;
-          (cat.children || []).forEach(child => {
-            if (child.children) {
-              html += `<details class="year-picker">
-                <summary>${App.escapeHtml(child.name)}<span class="text-secondary">${child.children.length} 套试卷</span></summary>
-                <div class="year-papers">${child.children.map(paper => `
-                  <a class="chapter-entry" href="practice.html?chapter=${encodeURIComponent(paper.id)}">${App.escapeHtml(paper.name)}</a>
-                `).join('')}</div>
-              </details>`;
-            } else {
-              html += `<a class="chapter-entry" href="practice.html?chapter=${encodeURIComponent(child.id)}">${App.escapeHtml(child.name)}</a>`;
-            }
-          });
-          html += `</div></div>`;
-        });
-        grid.innerHTML = html;
-      } else {
-        main.innerHTML = `<div class="empty-state"><div class="empty-icon">📚</div><h3>暂无章节</h3><p>请先配置题目分类</p></div>`;
-      }
-    });
-  </script>
+  <script src="js/storage.js?v=4"></script>
+  <script src="js/data-loader.js?v=4"></script>
+  <script src="js/main.js?v=4"></script>
+  <script src="js/dashboard.js?v=4"></script>
 </body>
 </html>

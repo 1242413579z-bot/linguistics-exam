@@ -7,7 +7,7 @@ const App = {
     await this.renderSidebar();
     this.initTheme();
     this.bindEvents();
-    this.setActiveNav();
+    await this.setActiveNav();
   },
 
   detectPage() {
@@ -38,12 +38,40 @@ const App = {
   },
 
   /* ===== 侧边栏 ===== */
+  SCOPES: [
+    { key: 'all', label: '完整', desc: '全部题目' },
+    { key: 'curated', label: '严选', desc: '高频优质题' },
+    { key: 'past', label: '真题', desc: '按年份' }
+  ],
+
+  getScope() {
+    return Storage.getSettings().scope || 'all';
+  },
+
+  setScope(scope) {
+    const settings = Storage.getSettings();
+    settings.scope = scope;
+    Storage.setSettings(settings);
+  },
+
   async renderSidebar() {
-    const cats = await DataLoader.loadCategories();
     const sidebar = document.getElementById('sidebar-body');
     if (!sidebar) return;
 
+    const scope = this.getScope();
+
     let html = `
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">学习概览</div>
+        <a class="sidebar-link" href="index.html" data-page="index.html"><span class="icon">🏠</span>学习首页</a>
+        <a class="sidebar-link" href="learning-records.html" data-page="learning-records.html"><span class="icon">📊</span>学习记录</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">题库范围</div>
+        <div class="scope-switch">
+          ${this.SCOPES.map(s => `<button class="scope-chip ${scope === s.key ? 'active' : ''}" data-scope="${s.key}" title="${s.desc}">${s.label}</button>`).join('')}
+        </div>
+      </div>
       <div class="sidebar-section">
         <div class="sidebar-section-title">题库快捷入口</div>
         <a class="sidebar-link" href="favorites.html" data-page="favorites.html"><span class="icon">⭐</span>收藏本</a>
@@ -52,9 +80,34 @@ const App = {
         <a class="sidebar-link" href="paper.html" data-page="paper.html"><span class="icon">📝</span>智能组卷</a>
         <a class="sidebar-link" href="notes.html" data-page="notes.html"><span class="icon">📋</span>题目笔记</a>
       </div>
-      <div class="sidebar-section">
-        <div class="sidebar-section-title">题库分类</div>
+      <div class="sidebar-section" id="category-section"></div>
     `;
+
+    sidebar.innerHTML = html;
+
+    await this.renderCategoryTree(scope);
+
+    // 范围切换
+    sidebar.querySelectorAll('.scope-chip').forEach(chip => {
+      chip.addEventListener('click', async () => {
+        const next = chip.dataset.scope;
+        this.setScope(next);
+        sidebar.querySelectorAll('.scope-chip').forEach(c => c.classList.toggle('active', c.dataset.scope === next));
+        await this.renderCategoryTree(next);
+        this.setActiveNav();
+      });
+    });
+  },
+
+  /* 按当前范围渲染分类树 */
+  async renderCategoryTree(scope) {
+    const cats = await DataLoader.loadCategories();
+    const section = document.getElementById('category-section');
+    if (!section) return;
+
+    const scopeLabel = (this.SCOPES.find(s => s.key === scope) || {}).label || '完整';
+
+    let html = `<div class="sidebar-section-title">题库分类 · ${scopeLabel}</div>`;
 
     cats.categories.forEach((cat, idx) => {
       html += `
@@ -75,27 +128,26 @@ const App = {
             </div>
             <div class="category-subchildren">`;
           child.children.forEach(sub => {
-            html += `<a class="category-child" href="practice.html?chapter=${sub.id}" data-chapter="${sub.id}">${sub.name}</a>`;
+            html += `<a class="category-child" href="practice.html?chapter=${sub.id}&scope=${scope}" data-chapter="${sub.id}">${sub.name}</a>`;
           });
           html += `</div></div>`;
         } else {
-          html += `<a class="category-child" href="practice.html?chapter=${child.id}" data-chapter="${child.id}">${child.name}</a>`;
+          html += `<a class="category-child" href="practice.html?chapter=${child.id}&scope=${scope}" data-chapter="${child.id}">${child.name}</a>`;
         }
       });
       html += `</div></div>`;
     });
 
-    html += `</div>`;
-    sidebar.innerHTML = html;
+    section.innerHTML = html;
 
     // 绑定分类折叠
-    sidebar.querySelectorAll('.category-header').forEach(header => {
+    section.querySelectorAll('.category-header').forEach(header => {
       header.addEventListener('click', () => {
         header.parentElement.classList.toggle('collapsed');
       });
     });
     // 绑定子分类折叠
-    sidebar.querySelectorAll('.category-subheader').forEach(header => {
+    section.querySelectorAll('.category-subheader').forEach(header => {
       header.addEventListener('click', () => {
         header.parentElement.classList.toggle('collapsed');
       });
@@ -139,7 +191,7 @@ const App = {
     });
   },
 
-  setActiveNav() {
+  async setActiveNav() {
     // 设置侧边栏激活状态
     document.querySelectorAll('.sidebar-link[data-page]').forEach(link => {
       if (link.dataset.page === this.currentPage) link.classList.add('active');
@@ -154,8 +206,19 @@ const App = {
       }
     });
 
-    // 章节激活
     const params = new URLSearchParams(window.location.search);
+
+    // 侧边栏范围与当前页 scope 保持一致
+    const urlScope = params.get('scope');
+    if (urlScope && this.SCOPES.some(s => s.key === urlScope)) {
+      if (this.getScope() !== urlScope) {
+        this.setScope(urlScope);
+        await this.renderCategoryTree(urlScope);
+      }
+      document.querySelectorAll('.scope-chip').forEach(c => c.classList.toggle('active', c.dataset.scope === urlScope));
+    }
+
+    // 章节激活
     const chapter = params.get('chapter');
     if (chapter) {
       document.querySelectorAll('.category-child').forEach(child => {

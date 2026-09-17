@@ -68,6 +68,12 @@ const Storage = {
     const mastery = this.getMastery();
     mastery[`${chapterId}:${questionId}`] = status;
     this.set('mastery', mastery);
+    const times = this.get('masteryTimes', {});
+    times[`${chapterId}:${questionId}`] = Date.now();
+    this.set('masteryTimes', times);
+  },
+  getMasteryTime(chapterId, questionId) {
+    return this.get('masteryTimes', {})[`${chapterId}:${questionId}`] || 0;
   },
 
   /* ===== 笔记 ===== */
@@ -189,5 +195,127 @@ const Storage = {
     const list = this.getPaperHistory();
     list.unshift({ ...paper, id: Date.now(), createdAt: Date.now() });
     this.set('paperHistory', list);
+  },
+
+  /* ===== 学习活动(每日作答统计) ===== */
+  _dateKey(ts) {
+    const d = ts ? new Date(ts) : new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  },
+
+  getDailyActivity() {
+    return this.get('dailyActivity', {});
+  },
+
+  /* 记录一次作答判定(掌握状态变更时调用) */
+  recordActivity(count = 1) {
+    const key = this._dateKey();
+    const activity = this.getDailyActivity();
+    activity[key] = (activity[key] || 0) + count;
+    this.set('dailyActivity', activity);
+    return activity[key];
+  },
+
+  getTodayCount() {
+    return this.getDailyActivity()[this._dateKey()] || 0;
+  },
+
+  getTotalCount() {
+    return Object.values(this.getDailyActivity()).reduce((s, n) => s + n, 0);
+  },
+
+  /* 有作答记录的天数 */
+  getActiveDayCount() {
+    return Object.keys(this.getDailyActivity()).filter(k => this.getDailyActivity()[k] > 0).length;
+  },
+
+  /* 连续学习天数(含今日;若今日未作答则从昨日回溯) */
+  getStreak() {
+    const activity = this.getDailyActivity();
+    const cursor = new Date();
+    cursor.setHours(0, 0, 0, 0);
+    if (!activity[this._dateKey(cursor.getTime())]) {
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    let streak = 0;
+    while (activity[this._dateKey(cursor.getTime())]) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
+  },
+
+  /* 最长连续学习天数 */
+  getMaxStreak() {
+    const days = Object.keys(this.getDailyActivity())
+      .filter(k => this.getDailyActivity()[k] > 0)
+      .sort();
+    let max = 0, cur = 0, prev = null;
+    days.forEach(day => {
+      const d = new Date(`${day}T00:00:00`);
+      if (prev && (d - prev) === 86400000) cur += 1;
+      else cur = 1;
+      max = Math.max(max, cur);
+      prev = d;
+    });
+    return max;
+  },
+
+  /* ===== 学习记录(统一时间线) ===== */
+  getLearningRecords() {
+    const records = [];
+
+    this.getFavorites().forEach(f => {
+      records.push({ type: 'favorite', chapterId: f.chapterId, questionId: f.id, time: f.time });
+    });
+
+    const mastery = this.getMastery();
+    Object.keys(mastery).forEach(key => {
+      const [chapterId, qid] = key.split(':');
+      records.push({
+        type: mastery[key],
+        chapterId,
+        questionId: parseInt(qid, 10),
+        time: this.getMasteryTime(chapterId, parseInt(qid, 10))
+      });
+    });
+
+    this.getRetestList().forEach(r => {
+      records.push({ type: 'retest', chapterId: r.chapterId, questionId: r.id, time: r.addedAt || 0 });
+    });
+
+    Object.keys(this.getNotes()).forEach(key => {
+      const [chapterId, qid] = key.split(':');
+      const note = this.getNotes()[key];
+      records.push({ type: 'note', chapterId, questionId: parseInt(qid, 10), time: note.updatedAt || 0 });
+    });
+
+    return records.sort((a, b) => b.time - a.time);
+  },
+
+  /* ===== 考试倒计时 ===== */
+  getExamConfig() {
+    return this.get('examConfig', { date: '2026-12-19', name: '考研初试' });
+  },
+  setExamConfig(config) {
+    return this.set('examConfig', config);
+  },
+  getDaysLeft() {
+    const { date } = this.getExamConfig();
+    const target = new Date(`${date}T00:00:00`);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return Math.max(0, Math.ceil((target - now) / 86400000));
+  },
+
+  /* ===== 上次学习章节 ===== */
+  getLastChapter() {
+    return this.get('lastChapter', null);
+  },
+  setLastChapter(chapterId) {
+    if (!chapterId) return;
+    const prev = this.getLastChapter() || {};
+    if (prev.chapterId === chapterId) return;
+    return this.set('lastChapter', { chapterId, time: Date.now() });
   }
 };
