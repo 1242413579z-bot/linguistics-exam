@@ -6,7 +6,7 @@ const DataLoader = {
   async loadCategories() {
     if (this._categories) return this._categories;
     try {
-      const res = await fetch('data/categories.json');
+      const res = await fetch('data/categories.json?v=2');
       this._categories = await res.json();
       return this._categories;
     } catch (e) {
@@ -18,7 +18,7 @@ const DataLoader = {
   async loadQuestions(chapterId) {
     if (this._questionCache[chapterId]) return this._questionCache[chapterId];
     try {
-      const res = await fetch(`data/questions/${chapterId}.json`);
+      const res = await fetch(`data/questions/${chapterId}.json?v=2`);
       if (!res.ok) {
         // 找不到文件时返回空
         return { chapterId, chapterName: '', questions: [] };
