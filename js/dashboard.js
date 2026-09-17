@@ -13,18 +13,29 @@ const Dashboard = {
     return ['无', '轻', '中', '高', '很高'][level] || '无';
   },
 
-  /* 构建最近 N 天的逐日数据,并对齐到整周(周日起) */
-  buildWeeks(days = 182) {
+  /* 学习活动统计的起始月份(默认 9 月) */
+  STUDY_START_MONTH: 9,
+
+  /* 统计起点:当前"学年"的 9 月 1 日(若当前月早于 9 月, 则回溯到上一年) */
+  getRangeStart() {
+    const today = new Date();
+    const m = this.STUDY_START_MONTH;
+    let year = today.getFullYear();
+    if (today.getMonth() + 1 < m) year -= 1;
+    return new Date(year, m - 1, 1);
+  },
+
+  /* 构建从起始月到今天的逐日数据, 并按周切分 */
+  buildWeeks() {
     const activity = Storage.getDailyActivity();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
-    // 起点:回溯 days 天,再往前对齐到周日
-    const start = new Date(today);
-    start.setDate(start.getDate() - (days - 1));
-    start.setDate(start.getDate() - start.getDay());
+    const start = this.getRangeStart();
 
     const cells = [];
+    // 首周对齐到周日(空位不计入作答)
+    for (let i = 0; i < start.getDay(); i++) cells.push(null);
+
     const cursor = new Date(start);
     while (cursor <= today) {
       const key = Storage._dateKey(cursor.getTime());
@@ -32,30 +43,28 @@ const Dashboard = {
       cursor.setDate(cursor.getDate() + 1);
     }
 
-    // 按周切分(每 7 天一周)
     const weeks = [];
-    for (let i = 0; i < cells.length; i += 7) {
-      weeks.push(cells.slice(i, i + 7));
-    }
+    for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
     return weeks;
   },
 
   /* 渲染热力图 HTML */
-  renderHeatmap(days = 182) {
-    const weeks = this.buildWeeks(days);
+  renderHeatmap() {
+    const weeks = this.buildWeeks();
     const todayKey = Storage._dateKey();
 
-    // 月份标签:找出每周第一天的月份,月份变化处打标
+    // 月份标签:取每周第一个有效日期, 月份变化处打标
     let monthLabels = '';
     let lastMonth = -1;
     weeks.forEach(week => {
-      const first = week[0];
-      const m = new Date(first.time).getMonth() + 1;
-      if (m !== lastMonth) {
-        monthLabels += `<span style="flex:0 0 auto;width:${week.length * 15}px;">${m}月</span>`;
+      const first = week.find(c => c);
+      const m = first ? new Date(first.time).getMonth() + 1 : lastMonth;
+      const width = week.length * 15;
+      if (m !== lastMonth && first) {
+        monthLabels += `<span style="flex:0 0 auto;width:${width}px;">${m}月</span>`;
         lastMonth = m;
       } else {
-        monthLabels += `<span style="flex:0 0 auto;width:${week.length * 15}px;"></span>`;
+        monthLabels += `<span style="flex:0 0 auto;width:${width}px;"></span>`;
       }
     });
 

@@ -41,6 +41,12 @@
 }
 .q-card:hover { box-shadow: var(--shadow); }
 
+/* ?q= 直达题目时的高亮 */
+.q-card-highlight {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
 .q-header {
   display: flex;
   align-items: center;

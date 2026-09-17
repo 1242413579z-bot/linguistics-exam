@@ -33,6 +33,10 @@ const PracticePage = {
     const urlLayout = App.getQueryParam('layout');
     this.layout = ['classic', 'focus'].includes(urlLayout) ? urlLayout : App.getLayout();
 
+    // 直达某题(掌握地图/错题复测等入口带 ?q=<题目ID>)
+    const targetQ = parseInt(App.getQueryParam('q'), 10);
+    if (targetQ) this._pendingJump = targetQ;
+
     this.render();
   },
 
@@ -112,6 +116,14 @@ const PracticePage = {
     const container = document.getElementById('questions-container');
     const list = this.getFilteredQuestions();
 
+    // 处理 ?q=<题目ID> 直达
+    if (this._pendingJump != null) {
+      const idx = list.findIndex(q => q.id === this._pendingJump);
+      if (idx >= 0) this.currentIndex = idx;
+      this._pendingScrollTo = this._pendingJump;
+      this._pendingJump = null;
+    }
+
     if (list.length === 0) {
       // 题目文件尚未录入, 与"该范围无题目"区分开
       if (this.questionsMissing) {
@@ -137,6 +149,7 @@ const PracticePage = {
         </div>
       `).join('');
       this.bindQuestionEvents();
+      this.scrollToPending();
       return;
     }
 
@@ -153,11 +166,25 @@ const PracticePage = {
       this.bindQuestionEvents();
       this.bindFocusBar(list);
       this.bindFocusKeyboard(list);
+      this.scrollToPending();
       return;
     }
 
     container.innerHTML = list.map((q, i) => this.renderQuestionCard(q, i)).join('');
     this.bindQuestionEvents();
+    this.scrollToPending();
+  },
+
+  /* 滚动并高亮 ?q= 指定的题目 */
+  scrollToPending() {
+    if (this._pendingScrollTo == null) return;
+    const qid = this._pendingScrollTo;
+    this._pendingScrollTo = null;
+    const el = document.querySelector(`.q-card[data-qid="${qid}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('q-card-highlight');
+    setTimeout(() => el.classList.remove('q-card-highlight'), 2200);
   },
 
   /* 底部题号快速切换条 */

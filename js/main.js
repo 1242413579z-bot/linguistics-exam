@@ -64,10 +64,14 @@ const App = {
     const scope = this.getScope();
 
     let html = `
-      <div class="sidebar-section">
-        <div class="sidebar-section-title">学习概览</div>
-        <a class="sidebar-link" href="index.html" data-page="index.html"><span class="icon">🏠</span>学习首页</a>
+      <div class="sidebar-section sidebar-nav-top">
+        <a class="sidebar-link" href="index.html" data-page="index.html"><span class="icon">🏠</span>首页</a>
+        <a class="sidebar-link" href="favorites.html" data-page="favorites.html"><span class="icon">⭐</span>收藏本</a>
+        <a class="sidebar-link" href="mastery.html" data-page="mastery.html"><span class="icon">🗺️</span>掌握地图</a>
         <a class="sidebar-link" href="knowledge.html" data-page="knowledge.html"><span class="icon">📖</span>知识目录</a>
+        <a class="sidebar-link" href="retest.html" data-page="retest.html"><span class="icon">🔄</span>错题复测</a>
+        <a class="sidebar-link" href="paper.html" data-page="paper.html"><span class="icon">📝</span>智能组卷</a>
+        <a class="sidebar-link" href="notes.html" data-page="notes.html"><span class="icon">📋</span>题目笔记</a>
         <a class="sidebar-link" href="learning-records.html" data-page="learning-records.html"><span class="icon">📊</span>学习记录</a>
       </div>
       <div class="sidebar-section">
@@ -75,14 +79,6 @@ const App = {
         <div class="scope-switch">
           ${this.SCOPES.map(s => `<button class="scope-chip ${scope === s.key ? 'active' : ''}" data-scope="${s.key}" title="${s.desc}">${s.label}</button>`).join('')}
         </div>
-      </div>
-      <div class="sidebar-section">
-        <div class="sidebar-section-title">题库快捷入口</div>
-        <a class="sidebar-link" href="favorites.html" data-page="favorites.html"><span class="icon">⭐</span>收藏本</a>
-        <a class="sidebar-link" href="mastery.html" data-page="mastery.html"><span class="icon">🗺️</span>掌握地图</a>
-        <a class="sidebar-link" href="retest.html" data-page="retest.html"><span class="icon">🔄</span>错题复测</a>
-        <a class="sidebar-link" href="paper.html" data-page="paper.html"><span class="icon">📝</span>智能组卷</a>
-        <a class="sidebar-link" href="notes.html" data-page="notes.html"><span class="icon">📋</span>题目笔记</a>
       </div>
       <div class="sidebar-section" id="category-section"></div>
       <div class="sidebar-section">

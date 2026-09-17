@@ -45,14 +45,27 @@ const KnowledgePage = {
     const totalQ = this.sections.reduce((s, sec) => s + sec.rows.reduce((a, r) => a + r.total, 0), 0);
     const totalMastered = this.sections.reduce((s, sec) => s + sec.rows.reduce((a, r) => a + r.mastered, 0), 0);
 
-    const toc = this.sections.map(sec => `
-      <div class="toc-group">
-        <div class="toc-group-title">${sec.cat.icon || '📁'} ${App.escapeHtml(sec.cat.name)}</div>
-        ${sec.rows.filter(r => r.total > 0).map(r =>
-          `<a class="toc-link" data-target="cat-${r.id}">${App.escapeHtml(r.name)}</a>`
-        ).join('')}
-      </div>
-    `).join('');
+    const toc = this.sections.map(sec => {
+      const rows = sec.rows.filter(r => r.total > 0);
+      let links;
+      if (this.isGrouped(sec)) {
+        // 有年份层级的分类(如南师大真题): 目录只显示年份, 锚点指向该年第一份试卷
+        const seen = new Set();
+        links = rows.filter(r => {
+          if (seen.has(r.group)) return false;
+          seen.add(r.group);
+          return true;
+        }).map(r => `<a class="toc-link" data-target="cat-${r.id}">${App.escapeHtml(r.group)}</a>`);
+      } else {
+        links = rows.map(r => `<a class="toc-link" data-target="cat-${r.id}">${App.escapeHtml(r.name)}</a>`);
+      }
+      return `
+        <div class="toc-group">
+          <div class="toc-group-title">${sec.cat.icon || '📁'} ${App.escapeHtml(sec.cat.name)}</div>
+          ${links.join('')}
+        </div>
+      `;
+    }).join('');
 
     const body = this.sections.map(sec => `
       <div class="knowledge-section" id="sec-${sec.cat.id}">
@@ -61,8 +74,15 @@ const KnowledgePage = {
           <span class="text-secondary text-sm">${sec.rows.reduce((a, r) => a + r.total, 0)} 题 · ${sec.rows.filter(r => r.total > 0).length} 个章节</span>
         </div>
         <div class="card">
-          ${sec.rows.length === 0 ? '<p class="text-secondary text-sm">该分类下暂无章节</p>' :
-            sec.rows.map(r => this.renderChapterRow(r)).join('')}
+          ${sec.rows.length === 0 ? '<p class="text-secondary text-sm">该分类下暂无章节</p>'
+            : this.isGrouped(sec)
+              ? this.groupRows(sec).map(g => `
+                  <div class="knowledge-year">
+                    <div class="knowledge-year-title">${App.escapeHtml(g.group)}</div>
+                    ${g.rows.map(r => this.renderChapterRow(r, true)).join('')}
+                  </div>
+                `).join('')
+              : sec.rows.map(r => this.renderChapterRow(r)).join('')}
         </div>
       </div>
     `).join('');
@@ -96,14 +116,30 @@ const KnowledgePage = {
     this.bindScrollSpy();
   },
 
-  renderChapterRow(r) {
+  /* 该分类是否含年份层级(三级分类) */
+  isGrouped(sec) {
+    return sec.rows.some(r => r.group);
+  },
+
+  /* 按年份归并, 返回 [{group, rows}] */
+  groupRows(sec) {
+    const map = new Map();
+    sec.rows.forEach(r => {
+      const key = r.group || '';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(r);
+    });
+    return [...map.entries()].map(([group, rows]) => ({ group, rows }));
+  },
+
+  renderChapterRow(r, hideGroup = false) {
     const percent = r.total ? Math.round((r.done / r.total) * 100) : 0;
     const empty = r.total === 0;
     return `
       <div class="knowledge-chapter" id="cat-${r.id}">
         <div class="knowledge-chapter-main">
           <div class="knowledge-chapter-name">
-            ${r.group ? `<span class="text-secondary text-sm">${App.escapeHtml(r.group)} · </span>` : ''}${App.escapeHtml(r.name)}
+            ${r.group && !hideGroup ? `<span class="text-secondary text-sm">${App.escapeHtml(r.group)} · </span>` : ''}${App.escapeHtml(r.name)}
           </div>
           ${empty
             ? '<div class="knowledge-chapter-meta">暂无题目</div>'
