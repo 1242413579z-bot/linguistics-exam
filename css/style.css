@@ -621,12 +621,29 @@ ul, ol { list-style: none; }
 
 /* ===== 学习活动热力图 ===== */
 .heatmap-wrap { overflow-x: auto; padding-bottom: 4px; }
-.heatmap {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(7, 12px);
-  gap: 3px;
+/* 每月一行: 固定 31 格, 一天一格, 各月宽度一致 */
+.heatmap-months {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
   min-width: max-content;
+}
+.heat-month {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.heat-month-label {
+  flex: 0 0 auto;
+  width: 30px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-align: right;
+}
+.heat-days {
+  display: grid;
+  grid-template-columns: repeat(31, 12px);
+  gap: 3px;
 }
 .heat-cell {
   width: 12px; height: 12px;

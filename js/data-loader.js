@@ -8,7 +8,7 @@ const DataLoader = {
   async loadCategories() {
     if (this._categories) return this._categories;
     try {
-      const res = await fetch('data/categories.json?v=14');
+      const res = await fetch('data/categories.json?v=15');
       this._categories = await res.json();
       return this._categories;
     } catch (e) {
@@ -21,7 +21,7 @@ const DataLoader = {
     if (this._questionCache[chapterId]) return this._questionCache[chapterId];
     let result;
     try {
-      const res = await fetch(`data/questions/${chapterId}.json?v=14`);
+      const res = await fetch(`data/questions/${chapterId}.json?v=15`);
       if (!res.ok) {
         // 题目文件尚未录入(分类里已有该章节, 但还没有题库文件)
         result = { chapterId, chapterName: '', questions: [], missing: true };
@@ -105,7 +105,7 @@ const DataLoader = {
   async loadBank() {
     if (this._bank) return this._bank;
     try {
-      const res = await fetch('data/question-bank.json?v=14');
+      const res = await fetch('data/question-bank.json?v=15');
       this._bank = res.ok ? await res.json() : { subjects: {}, papers: {}, curated: {}, chapterTotals: {}, chapterQuestionIds: {} };
     } catch (e) {
       console.error('加载题目总索引失败:', e);
@@ -118,7 +118,7 @@ const DataLoader = {
   async loadSubjectQuestions(subjectId) {
     if (this._subjectCache[subjectId]) return this._subjectCache[subjectId];
     try {
-      const res = await fetch(`data/subjects/${subjectId}.json?v=14`);
+      const res = await fetch(`data/subjects/${subjectId}.json?v=15`);
       if (!res.ok) {
         this._subjectCache[subjectId] = { questions: [] };
       } else {

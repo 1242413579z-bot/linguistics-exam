@@ -31,79 +31,59 @@ const Dashboard = {
     return new Date(start.getFullYear(), 11, 31);
   },
 
-  /* 构建起止范围内的逐日数据, 并按周切分 */
-  buildWeeks() {
+  /* 构建起止范围内的逐日数据, 按月分行: 每月一行、固定 31 格, 一天一格 */
+  buildMonths() {
     const activity = Storage.getDailyActivity();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const start = this.getRangeStart();
     const end = this.getRangeEnd();
 
-    const cells = [];
-    // 首周对齐到周日(空位不计入作答)
-    for (let i = 0; i < start.getDay(); i++) cells.push(null);
-
+    const months = [];
     const cursor = new Date(start);
     while (cursor <= end) {
-      const key = Storage._dateKey(cursor.getTime());
-      cells.push({
-        date: key,
-        count: activity[key] || 0,
-        time: cursor.getTime(),
-        future: cursor > today
-      });
-      cursor.setDate(cursor.getDate() + 1);
+      const year = cursor.getFullYear();
+      const month = cursor.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const cells = [];
+      for (let d = 1; d <= 31; d++) {
+        // 不足 31 天的月份末尾留空占位, 保证每月格子数一致
+        if (d > daysInMonth) { cells.push(null); continue; }
+        const dayDate = new Date(year, month, d);
+        const key = Storage._dateKey(dayDate.getTime());
+        cells.push({
+          date: key,
+          count: activity[key] || 0,
+          time: dayDate.getTime(),
+          future: dayDate > today
+        });
+      }
+      months.push({ year, month: month + 1, cells });
+      cursor.setMonth(cursor.getMonth() + 1, 1);
     }
-
-    const weeks = [];
-    for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
-    return weeks;
+    return months;
   },
 
   /* 渲染热力图 HTML */
   renderHeatmap() {
-    const weeks = this.buildWeeks();
+    const months = this.buildMonths();
     const todayKey = Storage._dateKey();
 
-    // 月份标签:取每周第一个有效日期, 月份变化处打标
-    let monthLabels = '';
-    let lastMonth = -1;
-    weeks.forEach(week => {
-      const first = week.find(c => c);
-      const m = first ? new Date(first.time).getMonth() + 1 : lastMonth;
-      const width = week.length * 15;
-      if (m !== lastMonth && first) {
-        monthLabels += `<span style="flex:0 0 auto;width:${width}px;">${m}月</span>`;
-        lastMonth = m;
-      } else {
-        monthLabels += `<span style="flex:0 0 auto;width:${width}px;"></span>`;
-      }
-    });
-
-    const cellsHtml = weeks.map(week => {
-      let col = '';
-      for (let i = 0; i < 7; i++) {
-        const cell = week[i];
-        if (!cell) {
-          col += '<div class="heat-cell empty"></div>';
-          continue;
-        }
+    const rows = months.map(mo => {
+      const cells = mo.cells.map(cell => {
+        if (!cell) return '<div class="heat-cell empty"></div>';
         // 尚未到来的日期:留占位, 不参与强度统计
-        if (cell.future) {
-          col += `<div class="heat-cell future" title="${cell.date}(未到)"></div>`;
-          continue;
-        }
+        if (cell.future) return `<div class="heat-cell future" title="${cell.date}(未到)"></div>`;
         const level = this.getLevel(cell.count);
         const isToday = cell.date === todayKey;
-        col += `<div class="heat-cell" data-level="${level}" title="${cell.date}:${cell.count} 次作答判定${isToday ? '(今天)' : ''}"${isToday ? ' style="outline:1px solid var(--accent);outline-offset:1px;"' : ''}></div>`;
-      }
-      return `<div style="display:grid;grid-template-rows:repeat(7,12px);gap:3px;">${col}</div>`;
+        return `<div class="heat-cell" data-level="${level}" title="${cell.date}:${cell.count} 次作答判定${isToday ? '(今天)' : ''}"${isToday ? ' style="outline:1px solid var(--accent);outline-offset:1px;"' : ''}></div>`;
+      }).join('');
+      return `<div class="heat-month"><span class="heat-month-label">${mo.month}月</span><div class="heat-days">${cells}</div></div>`;
     }).join('');
 
     return `
       <div class="heatmap-wrap">
-        <div style="display:flex;gap:3px;font-size:11px;color:var(--text-tertiary);margin-bottom:6px;">${monthLabels}</div>
-        <div style="display:flex;gap:3px;">${cellsHtml}</div>
+        <div class="heatmap-months">${rows}</div>
       </div>
       <div class="heat-legend">
         <span>刷题强度</span>
