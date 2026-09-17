@@ -6,7 +6,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>语言学大观园 - 首页</title>
-  <link rel="stylesheet" href="css/style.css?v=2">
+  <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
   <div class="app-layout">
@@ -43,9 +43,9 @@
     </div>
   </div>
 
-  <script src="js/storage.js?v=2"></script>
-  <script src="js/data-loader.js?v=2"></script>
-  <script src="js/main.js?v=2"></script>
+  <script src="js/storage.js?v=3"></script>
+  <script src="js/data-loader.js?v=3"></script>
+  <script src="js/main.js?v=3"></script>
   <script>
     // 首页逻辑
     document.addEventListener('DOMContentLoaded', async () => {
@@ -83,9 +83,18 @@
         cats.categories.forEach(cat => {
           html += `<div style="margin-bottom:20px;">
             <h3 style="font-size:15px;color:var(--text-secondary);margin-bottom:10px;">${cat.icon || '📁'} ${App.escapeHtml(cat.name)}</h3>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">`;
+            <div class="chapter-grid">`;
           (cat.children || []).forEach(child => {
-            html += `<a href="practice.html?chapter=${child.id}" style="display:block;padding:14px;background:var(--bg-tertiary);border-radius:var(--radius);color:var(--text-primary);transition:all 0.15s;" onmouseover="this.style.background='var(--accent-bg)';this.style.color='var(--accent)'" onmouseout="this.style.background='var(--bg-tertiary)';this.style.color='var(--text-primary)'">${App.escapeHtml(child.name)}</a>`;
+            if (child.children) {
+              html += `<details class="year-picker">
+                <summary>${App.escapeHtml(child.name)}<span class="text-secondary">${child.children.length} 套试卷</span></summary>
+                <div class="year-papers">${child.children.map(paper => `
+                  <a class="chapter-entry" href="practice.html?chapter=${encodeURIComponent(paper.id)}">${App.escapeHtml(paper.name)}</a>
+                `).join('')}</div>
+              </details>`;
+            } else {
+              html += `<a class="chapter-entry" href="practice.html?chapter=${encodeURIComponent(child.id)}">${App.escapeHtml(child.name)}</a>`;
+            }
           });
           html += `</div></div>`;
         });

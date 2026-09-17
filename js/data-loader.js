@@ -6,7 +6,7 @@ const DataLoader = {
   async loadCategories() {
     if (this._categories) return this._categories;
     try {
-      const res = await fetch('data/categories.json?v=2');
+      const res = await fetch('data/categories.json?v=3');
       this._categories = await res.json();
       return this._categories;
     } catch (e) {
@@ -18,7 +18,7 @@ const DataLoader = {
   async loadQuestions(chapterId) {
     if (this._questionCache[chapterId]) return this._questionCache[chapterId];
     try {
-      const res = await fetch(`data/questions/${chapterId}.json?v=2`);
+      const res = await fetch(`data/questions/${chapterId}.json?v=3`);
       if (!res.ok) {
         // 找不到文件时返回空
         return { chapterId, chapterName: '', questions: [] };
@@ -41,7 +41,7 @@ const DataLoader = {
         if (child.children) {
           // 三级分类: 年份 -> 试卷
           child.children.forEach(sub => {
-            chapters.push({ ...sub, parentId: cat.id, parentName: cat.name });
+            chapters.push({ ...sub, parentId: cat.id, parentName: `${cat.name} · ${child.name}`, yearId: child.id });
           });
         } else {
           chapters.push({ ...child, parentId: cat.id, parentName: cat.name });

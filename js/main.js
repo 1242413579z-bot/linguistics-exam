@@ -159,7 +159,11 @@ const App = {
     const chapter = params.get('chapter');
     if (chapter) {
       document.querySelectorAll('.category-child').forEach(child => {
-        if (child.dataset.chapter === chapter) child.classList.add('active');
+        if (child.dataset.chapter === chapter) {
+          child.classList.add('active');
+          child.closest('.category-subgroup')?.classList.remove('collapsed');
+          child.closest('.category-group')?.classList.remove('collapsed');
+        }
       });
     }
   },
