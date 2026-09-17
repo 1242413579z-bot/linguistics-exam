@@ -110,14 +110,31 @@ const App = {
     if (!section) return;
 
     const scopeLabel = (this.SCOPES.find(s => s.key === scope) || {}).label || '完整';
+    const totals = await DataLoader.getChapterTotals();
+    const isPaperScope = scope === 'past';
+
+    // 三级分类(年份->试卷)属于真题卷, 只在"真题"范围出现;
+    // 二级分类(学科->章节)属于学科, 只在"完整/严选"范围出现。
+    const isPaperCategory = (cat) => (cat.children || []).some(ch => ch.children && ch.children.length);
+    const visible = cats.categories.filter(cat => isPaperCategory(cat) === isPaperScope);
 
     let html = `<div class="sidebar-section-title">题库分类 · ${scopeLabel}</div>`;
 
-    cats.categories.forEach((cat, idx) => {
+    if (!visible.length) {
+      html += '<div class="sidebar-empty">该范围下暂无分类</div>';
+    }
+
+    const countOf = (id) => {
+      const n = totals[id] || 0;
+      return n ? `<span class="cat-count">${n}</span>` : '';
+    };
+
+    visible.forEach((cat, idx) => {
+      const catTotal = DataLoader.getCategoryChapterIds(cat.id).reduce((s, id) => s + (totals[id] || 0), 0);
       html += `
         <div class="category-group ${idx === 0 ? '' : 'collapsed'}">
           <div class="category-header" data-toggle="${cat.id}">
-            <span>${cat.icon || '📁'} ${cat.name}</span>
+            <span>${cat.icon || '📁'} ${cat.name}${catTotal ? `<span class="cat-count">${catTotal}</span>` : ''}</span>
             <span class="arrow">▼</span>
           </div>
           <div class="category-children">
@@ -125,18 +142,19 @@ const App = {
       (cat.children || []).forEach(child => {
         if (child.children) {
           // 三级分类: 年份 -> 试卷
+          const yearTotal = child.children.reduce((s, sub) => s + (totals[sub.id] || 0), 0);
           html += `<div class="category-subgroup collapsed">
             <div class="category-subheader" data-toggle="${child.id}">
-              <span>${child.name}</span>
+              <span>${child.name}${yearTotal ? `<span class="cat-count">${yearTotal}</span>` : ''}</span>
               <span class="arrow">▼</span>
             </div>
             <div class="category-subchildren">`;
           child.children.forEach(sub => {
-            html += `<a class="category-child" href="practice.html?chapter=${sub.id}&scope=${scope}" data-chapter="${sub.id}">${sub.name}</a>`;
+            html += `<a class="category-child" href="practice.html?chapter=${sub.id}&scope=${scope}" data-chapter="${sub.id}">${sub.name}${countOf(sub.id)}</a>`;
           });
           html += `</div></div>`;
         } else {
-          html += `<a class="category-child" href="practice.html?chapter=${child.id}&scope=${scope}" data-chapter="${child.id}">${child.name}</a>`;
+          html += `<a class="category-child" href="practice.html?chapter=${child.id}&scope=${scope}" data-chapter="${child.id}">${child.name}${countOf(child.id)}</a>`;
         }
       });
       html += `</div></div>`;

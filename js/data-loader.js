@@ -2,12 +2,13 @@
 const DataLoader = {
   _categories: null,
   _questionCache: {},
-  _curatedIndex: null,
+  _bank: null,
+  _subjectCache: {},
 
   async loadCategories() {
     if (this._categories) return this._categories;
     try {
-      const res = await fetch('data/categories.json?v=10');
+      const res = await fetch('data/categories.json?v=11');
       this._categories = await res.json();
       return this._categories;
     } catch (e) {
@@ -20,7 +21,7 @@ const DataLoader = {
     if (this._questionCache[chapterId]) return this._questionCache[chapterId];
     let result;
     try {
-      const res = await fetch(`data/questions/${chapterId}.json?v=10`);
+      const res = await fetch(`data/questions/${chapterId}.json?v=11`);
       if (!res.ok) {
         // 题目文件尚未录入(分类里已有该章节, 但还没有题库文件)
         result = { chapterId, chapterName: '', questions: [], missing: true };
@@ -82,7 +83,7 @@ const DataLoader = {
     return chapters.find(c => c.id === chapterId);
   },
 
-  /* 获取所有题目（用于掌握地图等） */
+  /* 获取所有题目（用于智能组卷等） */
   async getAllQuestions() {
     const chapters = await this.getAllChapters();
     const all = [];
@@ -100,6 +101,60 @@ const DataLoader = {
     return questions.find(q => q.id === questionId);
   },
 
+  /* ===== 题目总索引(question-bank.json) ===== */
+  async loadBank() {
+    if (this._bank) return this._bank;
+    try {
+      const res = await fetch('data/question-bank.json?v=11');
+      this._bank = res.ok ? await res.json() : { subjects: {}, papers: {}, curated: {}, chapterTotals: {}, chapterQuestionIds: {} };
+    } catch (e) {
+      console.error('加载题目总索引失败:', e);
+      this._bank = { subjects: {}, papers: {}, curated: {}, chapterTotals: {}, chapterQuestionIds: {} };
+    }
+    return this._bank;
+  },
+
+  /* 某学科章节的题目明细(按需加载, 单独文件) */
+  async loadSubjectQuestions(subjectId) {
+    if (this._subjectCache[subjectId]) return this._subjectCache[subjectId];
+    try {
+      const res = await fetch(`data/subjects/${subjectId}.json?v=11`);
+      if (!res.ok) {
+        this._subjectCache[subjectId] = { questions: [] };
+      } else {
+        this._subjectCache[subjectId] = await res.json();
+      }
+    } catch (e) {
+      console.error(`加载学科题目失败 (${subjectId}):`, e);
+      this._subjectCache[subjectId] = { questions: [] };
+    }
+    return this._subjectCache[subjectId];
+  },
+
+  /* 是否学科章节(完整/严选视图) */
+  async isSubjectChapter(chapterId) {
+    const bank = await this.loadBank();
+    return !!bank.subjects[chapterId];
+  },
+
+  /* 学科/试卷的严选题目 ID 集合 */
+  async getCuratedSet(chapterId) {
+    const bank = await this.loadBank();
+    return new Set((bank.curated && bank.curated[chapterId]) || []);
+  },
+
+  /* 各章题目总数(学科 + 试卷) */
+  async getChapterTotals() {
+    const bank = await this.loadBank();
+    return bank.chapterTotals || {};
+  },
+
+  /* 各章题目 ID 列表(学科 + 试卷) */
+  async getChapterQuestionIds() {
+    const bank = await this.loadBank();
+    return bank.chapterQuestionIds || {};
+  },
+
   /* ===== 题库三分类:完整 / 严选 / 真题 ===== */
 
   /* 从题目来源中提取年份 (如 "2013年南师大611真题" -> 2013) */
@@ -108,41 +163,10 @@ const DataLoader = {
     return m ? parseInt(m[0], 10) : null;
   },
 
-  /* 是否为真题 */
+  /* 是否为真题(来源标注真题, 或经学科聚合时带 yearly 标记) */
   isPastQuestion(q) {
+    if (q.yearly) return true;
     return !!(q.source && q.source.includes('真题'));
-  },
-
-  /* 加载严选索引(预生成, 见 tools/build-curated-index.js)
-     避免练习页为统计考频而加载全部题库文件 */
-  async loadCuratedIndex() {
-    if (this._curatedIndex) return this._curatedIndex;
-    try {
-      const res = await fetch('data/curated-index.json?v=10');
-      this._curatedIndex = res.ok ? await res.json() : { curated: {}, frequency: {}, totals: {} };
-    } catch (e) {
-      console.error('加载严选索引失败:', e);
-      this._curatedIndex = { curated: {}, frequency: {}, totals: {} };
-    }
-    return this._curatedIndex;
-  },
-
-  /* 某章节的严选题目 ID 集合 */
-  async getCuratedSet(chapterId) {
-    const index = await this.loadCuratedIndex();
-    return new Set((index.curated && index.curated[chapterId]) || []);
-  },
-
-  /* 各章题目总数(免加载题库文件) */
-  async getChapterTotals() {
-    const index = await this.loadCuratedIndex();
-    return index.chapterTotals || {};
-  },
-
-  /* 各章题目 ID 列表(免加载题库文件) */
-  async getChapterQuestionIds() {
-    const index = await this.loadCuratedIndex();
-    return index.chapterQuestionIds || {};
   },
 
   /* 按范围过滤题目

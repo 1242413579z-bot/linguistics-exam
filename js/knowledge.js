@@ -6,6 +6,9 @@ const KnowledgePage = {
     this.cats = await DataLoader.loadCategories();
     const totals = await DataLoader.getChapterTotals();
     const masteryCounts = Storage.getMasteryCountsByChapter();
+    // 学科章节 id 集合: 用于区分学科行与真题卷行(避免题量重复统计)
+    const bank = await DataLoader.loadBank();
+    this.subjectIds = new Set(Object.keys(bank.subjects || {}));
 
     // 逐章节统计(仅读本地数据与预生成索引, 不加载题库文件)
     this.sections = [];
@@ -42,8 +45,10 @@ const KnowledgePage = {
     const main = document.getElementById('main-content');
     const displayName = Storage.getSetting('displayName', '');
 
-    const totalQ = this.sections.reduce((s, sec) => s + sec.rows.reduce((a, r) => a + r.total, 0), 0);
-    const totalMastered = this.sections.reduce((s, sec) => s + sec.rows.reduce((a, r) => a + r.mastered, 0), 0);
+    const totalQ = this.sections.reduce(
+      (s, sec) => s + sec.rows.filter(r => this.subjectIds.has(r.id)).reduce((a, r) => a + r.total, 0), 0);
+    const totalMastered = this.sections.reduce(
+      (s, sec) => s + sec.rows.filter(r => this.subjectIds.has(r.id)).reduce((a, r) => a + r.mastered, 0), 0);
 
     const toc = this.sections.map(sec => {
       const rows = sec.rows.filter(r => r.total > 0);
@@ -90,8 +95,13 @@ const KnowledgePage = {
     main.innerHTML = `
       <div class="page-header">
         <h1 class="page-title">📖 知识目录</h1>
-        <span class="text-secondary text-sm">共 ${totalQ} 题 · 已掌握 ${totalMastered} 题${displayName ? ' · ' + App.escapeHtml(displayName) : ''}</span>
+        <span class="text-secondary text-sm">
+          共 ${totalQ} 题 · 已掌握 ${totalMastered} 题${displayName ? ' · ' + App.escapeHtml(displayName) : ''}
+        </span>
       </div>
+      <p class="text-secondary text-xs" style="margin:-10px 0 16px;">
+        学科章节的题量已包含历年真题; 末尾“南师大真题”是按试卷查看的同一批题目。
+      </p>
 
       <div class="knowledge-layout">
         <aside class="knowledge-toc">

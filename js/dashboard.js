@@ -25,21 +25,33 @@ const Dashboard = {
     return new Date(year, m - 1, 1);
   },
 
-  /* 构建从起始月到今天的逐日数据, 并按周切分 */
+  /* 统计终点:同年 12 月 31 日(覆盖到考研结束, 未来日期留空占位) */
+  getRangeEnd() {
+    const start = this.getRangeStart();
+    return new Date(start.getFullYear(), 11, 31);
+  },
+
+  /* 构建起止范围内的逐日数据, 并按周切分 */
   buildWeeks() {
     const activity = Storage.getDailyActivity();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const start = this.getRangeStart();
+    const end = this.getRangeEnd();
 
     const cells = [];
     // 首周对齐到周日(空位不计入作答)
     for (let i = 0; i < start.getDay(); i++) cells.push(null);
 
     const cursor = new Date(start);
-    while (cursor <= today) {
+    while (cursor <= end) {
       const key = Storage._dateKey(cursor.getTime());
-      cells.push({ date: key, count: activity[key] || 0, time: cursor.getTime() });
+      cells.push({
+        date: key,
+        count: activity[key] || 0,
+        time: cursor.getTime(),
+        future: cursor > today
+      });
       cursor.setDate(cursor.getDate() + 1);
     }
 
@@ -76,8 +88,9 @@ const Dashboard = {
           col += '<div class="heat-cell empty"></div>';
           continue;
         }
-        if (cell.time > Date.now()) {
-          col += '<div class="heat-cell empty"></div>';
+        // 尚未到来的日期:留占位, 不参与强度统计
+        if (cell.future) {
+          col += `<div class="heat-cell future" title="${cell.date}(未到)"></div>`;
           continue;
         }
         const level = this.getLevel(cell.count);

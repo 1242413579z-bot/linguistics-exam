@@ -17,13 +17,29 @@ const PracticePage = {
       return;
     }
 
-    this.allChapters = await DataLoader.getAllChapters();
-    this.chapter = await DataLoader.getChapter(this.chapterId);
-    const data = await DataLoader.loadQuestions(this.chapterId);
-    this.questions = data.questions || [];
-    this.questionsMissing = !!data.missing;
+    // 学科章节(完整/严选) 与 试卷章节(真题) 两种数据来源
+    const bank = await DataLoader.loadBank();
+    this.isSubject = !!bank.subjects[this.chapterId];
+
+    if (this.isSubject) {
+      const meta = bank.subjects[this.chapterId];
+      const data = await DataLoader.loadSubjectQuestions(this.chapterId);
+      this.questions = data.questions || [];
+      this.chapter = {
+        name: meta.name,
+        parentName: [meta.catName, meta.group].filter(Boolean).join(' · ')
+      };
+    } else {
+      this.chapter = await DataLoader.getChapter(this.chapterId);
+      const data = await DataLoader.loadQuestions(this.chapterId);
+      this.questions = data.questions || [];
+      this.questionsMissing = !!data.missing;
+    }
+
+    this.navList = await this.buildNavList();
     this.curatedSet = await DataLoader.getCuratedSet(this.chapterId);
     Storage.setLastChapter(this.chapterId);
+    Storage.setSetting('lastChapterSubject', this.isSubject);
 
     // 支持从侧边栏带入范围
     const urlScope = App.getQueryParam('scope');
@@ -40,6 +56,26 @@ const PracticePage = {
     this.render();
   },
 
+  /* 上一节/下一节的导航列表:
+     学科章节 -> 学科树顺序; 试卷 -> 年份下的试卷顺序 */
+  async buildNavList() {
+    const cats = await DataLoader.loadCategories();
+    const list = [];
+    cats.categories.forEach(cat => {
+      (cat.children || []).forEach(child => {
+        const leaves = child.children ? child.children : [child];
+        leaves.forEach(leaf => {
+          const isSubjectLeaf = /^(ling|mc|ac)-/.test(leaf.id);
+          const isPaperLeaf = !!child.children; // 三级分类的叶子=试卷
+          if (this.isSubject ? isSubjectLeaf : isPaperLeaf) {
+            list.push({ id: leaf.id, name: leaf.name });
+          }
+        });
+      });
+    });
+    return list;
+  },
+
   render() {
     const main = document.getElementById('main-content');
     const progress = Storage.getChapterProgress(this.chapterId);
@@ -52,14 +88,18 @@ const PracticePage = {
     };
 
     // 上一节/下一节
-    const idx = this.allChapters.findIndex(c => c.id === this.chapterId);
-    const prev = idx > 0 ? this.allChapters[idx - 1] : null;
-    const next = idx < this.allChapters.length - 1 ? this.allChapters[idx + 1] : null;
+    const nav = this.navList || [];
+    const idx = nav.findIndex(c => c.id === this.chapterId);
+    const prev = idx > 0 ? nav[idx - 1] : null;
+    const next = idx >= 0 && idx < nav.length - 1 ? nav[idx + 1] : null;
 
     main.innerHTML = `
       <div class="practice-header">
         <div>
-          <div class="practice-title">${App.escapeHtml(this.chapter?.parentName || '')} · ${App.escapeHtml(this.chapter?.name || this.chapterId)}</div>
+          <div class="practice-title">
+            ${this.isSubject ? '<span class="badge badge-green">学科</span>' : '<span class="badge badge-blue">真题卷</span>'}
+            ${App.escapeHtml(this.chapter?.parentName || '')}${this.chapter?.name ? ' · ' + App.escapeHtml(this.chapter.name) : ''}
+          </div>
           <div class="practice-meta">已完成 ${doneCount} / ${total} 题</div>
         </div>
         <div class="practice-nav">
@@ -266,6 +306,7 @@ const PracticePage = {
           <div class="row" style="gap:10px;">
             <span class="q-number">第 ${idx + 1} 题</span>
             <span class="q-source">${App.escapeHtml(q.source || '')}</span>
+            ${q.from ? `<a class="q-origin" href="practice.html?chapter=${encodeURIComponent(q.from)}&q=${q.origId || ''}" title="来自 ${App.escapeHtml(q.fromName || '')}">原卷</a>` : ''}
             ${this.curatedSet.has(q.id) ? '<span class="badge badge-orange">严选</span>' : ''}
             ${hasAnswer ? '<span class="badge badge-green">有答案</span>' : ''}
             ${hasAnalysis ? '<span class="badge badge-blue">有解析</span>' : ''}

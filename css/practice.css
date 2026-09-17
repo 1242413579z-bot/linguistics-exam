@@ -64,6 +64,13 @@
   font-size: 12px;
   color: var(--text-tertiary);
 }
+/* 学科视图里标注题目出自哪份原卷 */
+.q-origin {
+  font-size: 12px;
+  color: var(--accent);
+  border-bottom: 1px dashed var(--accent);
+}
+.q-origin:hover { border-bottom-style: solid; }
 .q-actions { display: flex; gap: 6px; }
 
 .q-action-btn {

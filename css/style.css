@@ -219,6 +219,26 @@ ul, ol { list-style: none; }
 .category-child:hover { background: var(--bg-hover); color: var(--text-primary); }
 .category-child.active { color: var(--accent); background: var(--accent-bg); font-weight: 500; }
 
+/* 侧边栏分类题量 */
+.cat-count {
+  float: right;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-left: 6px;
+  font-weight: 400;
+}
+.category-child .cat-count { float: none; }
+.category-child { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.category-child .cat-count { flex-shrink: 0; }
+.sidebar-empty {
+  padding: 8px 20px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.category-subheader span:first-child,
+.category-header span:first-child { display: flex; align-items: baseline; justify-content: space-between; flex: 1; gap: 6px; }
+.category-header .cat-count, .category-subheader .cat-count { float: none; }
+
 /* 主内容区 */
 .main-wrapper {
   margin-left: var(--sidebar-width);
@@ -619,6 +639,12 @@ ul, ol { list-style: none; }
 .heat-cell[data-level="3"] { background: var(--accent); opacity: 0.8; }
 .heat-cell[data-level="4"] { background: var(--accent); }
 .heat-cell.empty { background: transparent; cursor: default; }
+/* 尚未到来的日期:虚线占位, 铺满到 12 月底 */
+.heat-cell.future {
+  background: transparent;
+  border: 1px dashed var(--border-color);
+  cursor: default;
+}
 
 .heat-legend {
   display: flex;

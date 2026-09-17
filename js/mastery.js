@@ -27,19 +27,19 @@ const MasteryPage = {
     this.favSet = new Set(Storage.getFavorites().map(f => `${f.chapterId}:${f.id}`));
     this.noteSet = new Set(Object.keys(Storage.getNotes()));
 
-    // 章节顺序沿用分类树
+    // 章节顺序沿用分类树, 只取学科章节
+    // (真题卷的题目已归入学科, 若同时统计会重复计数)
     const cats = await DataLoader.loadCategories();
+    const bank = await DataLoader.loadBank();
     this.cats = cats;
     this.chapters = [];
     cats.categories.forEach(cat => {
       (cat.children || []).forEach(child => {
-        if (child.children) {
-          child.children.forEach(sub => {
-            this.chapters.push({ id: sub.id, name: sub.name, parentName: cat.name, group: cat.name, catId: cat.id });
-          });
-        } else {
-          this.chapters.push({ id: child.id, name: child.name, parentName: cat.name, group: cat.name, catId: cat.id });
-        }
+        const leaves = child.children ? child.children : [child];
+        leaves.forEach(leaf => {
+          if (!bank.subjects[leaf.id]) return;
+          this.chapters.push({ id: leaf.id, name: leaf.name, group: cat.name, catId: cat.id });
+        });
       });
     });
 
@@ -84,8 +84,8 @@ const MasteryPage = {
       return chapters.reduce((s, c) => s + (this.totals[c.id] || 0), 0);
     };
 
-    const cats = this.cats.categories;
-    const totalAll = Object.values(this.totals).reduce((s, n) => s + n, 0);
+    const cats = this.cats.categories.filter(c => this.chapters.some(ch => ch.catId === c.id));
+    const totalAll = tabCount('all');
 
     main.innerHTML = `
       <div class="page-header">
